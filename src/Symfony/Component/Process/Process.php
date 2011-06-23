@@ -122,10 +122,10 @@ class Process
         foreach ($pipes as $pipe) {
             stream_set_blocking($pipe, false);
         }
-        
+
         if (null === $this->stdin) {
             fclose($pipes[0]);
-            $writePipes = null; 
+            $writePipes = null;
         } else {
             $writePipes = array($pipes[0]);
             $stdinLen = strlen($this->stdin);
@@ -173,6 +173,13 @@ class Process
         }
 
         $this->status = proc_get_status($process);
+
+        $time = 0;
+        while (1 == $this->status['running'] && $time < 1000000) {
+            $time += 1000;
+            usleep(1000);
+            $this->status = proc_get_status($process);
+        }
 
         proc_close($process);
 
