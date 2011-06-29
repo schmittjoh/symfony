@@ -810,6 +810,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
 '
         );
     }
+
     public function testDateTimeWithEmptyValueOnTime()
     {
         $form = $this->factory->createNamed('datetime', 'na&me', '2011-02-03', array(
@@ -890,6 +891,69 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
             ]
     ]
     [count(.//select)=6]
+'
+        );
+    }
+
+    public function testDateTimeSingleText()
+    {
+        $form = $this->factory->createNamed('datetime', 'na&me', '2011-02-03 04:05:06', array(
+            'property_path' => 'name',
+            'input' => 'string',
+            'date_widget' => 'single_text',
+            'time_widget' => 'single_text',
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./input
+            [@type="text"]
+            [@id="na&me_date"]
+            [@name="na&me[date]"]
+            [@value="Feb 3, 2011"]
+        /following-sibling::input
+            [@type="text"]
+            [@id="na&me_time"]
+            [@name="na&me[time]"]
+            [@value="04:05:00"]
+    ]
+'
+        );
+    }
+
+    public function testDateTimeWithWidgetSingleText()
+    {
+        $form = $this->factory->createNamed('datetime', 'name', '2011-02-03 04:05:06', array(
+            'property_path' => 'name',
+            'input' => 'string',
+            'widget' => 'single_text',
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/input
+    [@type="text"]
+    [@name="name"]
+    [@value="2011-02-03 04:05:00"]
+'
+        );
+    }
+
+    public function testDateTimeWithWidgetSingleTextIgnoreDateAndTimeWidgets()
+    {
+        $form = $this->factory->createNamed('datetime', 'na&me', '2011-02-03 04:05:06', array(
+            'property_path' => 'name',
+            'input' => 'string',
+            'date_widget' => 'choice',
+            'time_widget' => 'choice',
+            'widget' => 'single_text',
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/input
+    [@type="text"]
+    [@name="na&me"]
+    [@value="2011-02-03 04:05:00"]
 '
         );
     }
@@ -1444,6 +1508,23 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
             [count(./option)>59]
     ]
     [count(./select)=3]
+'
+        );
+    }
+
+    public function testTimeSingleText()
+    {
+        $form = $this->factory->createNamed('time', 'na&me', '04:05:06', array(
+            'property_path' => 'name',
+            'input' => 'string',
+            'widget' => 'single_text',
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/input
+    [@type="text"]
+    [@name="na&me"]
+    [@value="04:05:06"]
 '
         );
     }
