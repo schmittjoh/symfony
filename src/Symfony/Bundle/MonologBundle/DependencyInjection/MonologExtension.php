@@ -50,7 +50,7 @@ class MonologExtension extends Extension
             $logger = $container->getDefinition('monolog.logger_prototype');
 
             if (!empty($config['processors'])) {
-                $this->addProcessors($logger, $config['processors']);
+                $this->addProcessors($container, $logger, $config['processors']);
             }
 
             $handlers = array();
@@ -239,7 +239,7 @@ class MonologExtension extends Extension
             $definition->addMethodCall('setFormatter', array(new Reference($handler['formatter'])));
         }
         if (!empty($handler['processors'])) {
-            $this->addProcessors($definition, $handler['processors']);
+            $this->addProcessors($container, $definition, $handler['processors']);
         }
         $container->setDefinition($handlerId, $definition);
 
@@ -251,17 +251,22 @@ class MonologExtension extends Extension
         return sprintf('monolog.handler.%s', $name);
     }
 
-    private function addProcessors(Definition $definition, array $processors)
+    private function addProcessors(ContainerBuilder $container, Definition $definition, array $processors)
     {
         foreach (array_reverse($processors) as $processor) {
-            $definition->addMethodCall('pushProcessor', array($this->parseDefinition($processor)));
+            $definition->addMethodCall('pushProcessor', array($this->parseDefinition($processor, $container)));
         }
     }
 
-    private function parseDefinition($definition)
+    private function parseDefinition($definition, ContainerBuilder $container = null)
     {
         if (0 === strpos($definition, '@')) {
-            return new Reference(substr($definition, 1));
+            $definition = substr($definition, 1);
+            if ($container && $container->hasDefinition($definition)) {
+                $container->getDefinition($definition)->setPublic(true);
+            }
+
+            return new Reference($definition);
         }
 
         return $definition;
