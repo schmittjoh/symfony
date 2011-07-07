@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Security\Http;
+namespace Symfony\Component\Security;
 
 final class SecurityEvents
 {
