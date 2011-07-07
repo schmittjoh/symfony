@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Security\Http\Firewall;
 
+use Symfony\Component\Security\Http\Authentication\TokenAttributeSourceInterface;
 use Symfony\Component\Security\Core\SecurityContextInterface;
 use Symfony\Component\Security\Core\Authentication\AuthenticationManagerInterface;
 use Symfony\Component\Security\Core\Authentication\Token\PreAuthenticatedToken;
@@ -32,6 +33,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 abstract class AbstractPreAuthenticatedListener implements ListenerInterface
 {
     protected $logger;
+    private $tokenAttributeSource;
     private $securityContext;
     private $authenticationManager;
     private $providerKey;
@@ -44,6 +46,16 @@ abstract class AbstractPreAuthenticatedListener implements ListenerInterface
         $this->providerKey = $providerKey;
         $this->logger = $logger;
         $this->dispatcher = $dispatcher;
+    }
+
+    /**
+     * Sets the TokenAttributeSource implementation to use.
+     *
+     * @param TokenAttributeSourceInterface $source
+     */
+    public function setTokenAttributeSource(TokenAttributeSourceInterface $source)
+    {
+        $this->tokenAttributeSource = $source;
     }
 
     /**
@@ -72,7 +84,13 @@ abstract class AbstractPreAuthenticatedListener implements ListenerInterface
         }
 
         try {
-            $token = $this->authenticationManager->authenticate(new PreAuthenticatedToken($user, $credentials, $this->providerKey));
+            $token = new PreAuthenticatedToken($user, $credentials, $this->providerKey);
+
+            if (null !== $this->tokenAttributeSource) {
+                $token->setAttributes($this->tokenAttributeSource->buildAttributes($request));
+            }
+
+            $token = $this->authenticationManager->authenticate($token);
 
             if (null !== $this->logger) {
                 $this->logger->info(sprintf('Authentication success: %s', $token));

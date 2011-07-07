@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Security\Http\Firewall;
 
+use Symfony\Component\Security\Http\Authentication\TokenAttributeSourceInterface;
 use Symfony\Component\Security\Core\SecurityContextInterface;
 use Symfony\Component\HttpKernel\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
@@ -27,12 +28,14 @@ class AnonymousAuthenticationListener implements ListenerInterface
     private $context;
     private $key;
     private $logger;
+    private $tokenAttributeSource;
 
-    public function __construct(SecurityContextInterface $context, $key, LoggerInterface $logger = null)
+    public function __construct(SecurityContextInterface $context, $key, LoggerInterface $logger = null, TokenAttributeSourceInterface $tokenAttributeSource = null)
     {
         $this->context = $context;
         $this->key     = $key;
         $this->logger  = $logger;
+        $this->tokenAttributeSource = $tokenAttributeSource;
     }
 
     /**
@@ -46,7 +49,13 @@ class AnonymousAuthenticationListener implements ListenerInterface
             return;
         }
 
-        $this->context->setToken(new AnonymousToken($this->key, 'anon.', array()));
+        $token = new AnonymousToken($this->key, 'anon.', array());
+
+        if (null !== $this->tokenAttributeSource) {
+            $token->setAttributes($this->tokenAttributeSource->buildAttributes($event->getRequest()));
+        }
+
+        $this->context->setToken($token);
 
         if (null !== $this->logger) {
             $this->logger->info(sprintf('Populated SecurityContext with an anonymous Token'));
