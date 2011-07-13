@@ -143,7 +143,7 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
 
         $namespace = $this->getExtension($extension)->getAlias();
 
-        $this->extensionConfigs[$namespace][] = $this->getParameterBag()->resolveValue($values);
+        $this->extensionConfigs[$namespace][] = $values;
 
         return $this;
     }
@@ -623,10 +623,8 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
      */
     public function findDefinition($id)
     {
-        $id = strtolower($id);
-
-        if ($this->hasAlias($id)) {
-            return $this->findDefinition((string) $this->getAlias($id));
+        while ($this->hasAlias($id)) {
+            $id = (string) $this->getAlias($id);
         }
 
         return $this->getDefinition($id);

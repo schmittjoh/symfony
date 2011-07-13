@@ -9,6 +9,10 @@ timeline closely anyway.
 RC4 to RC5
 ----------
 
+* `EntityUserProvider` class has been moved and FQCN changed from
+  `Symfony\Component\Security\Core\User\EntityUserProvider` to
+  `Symfony\Bridge\Doctrine\Security\User\EntityUserProvider`.
+
 * Removed the guesser for the Choice constraint as the constraint only knows
   about the valid keys, and not their values.
 
@@ -45,9 +49,9 @@ RC4 to RC5
         framework:
             trust_proxy_headers: true
 
- * To avoid hidden naming collisions, the AbstractType does not try to define
-   the name of form types magically. You now need to implement the `getName()`
-   method explicitly when creating a custom type.
+* To avoid hidden naming collisions, the AbstractType does not try to define
+  the name of form types magically. You now need to implement the `getName()`
+  method explicitly when creating a custom type.
 
 RC3 to RC4
 ----------
