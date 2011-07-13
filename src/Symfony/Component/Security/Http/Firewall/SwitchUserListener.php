@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Security\Http\Firewall;
 
+use Symfony\Component\Security\Http\Authentication\TokenAttributeSourceInterface;
+
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\SecurityContextInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
@@ -27,7 +29,7 @@ use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Http\Event\SwitchUserEvent;
-use Symfony\Component\Security\Http\SecurityEvents;
+use Symfony\Component\Security\SecurityEvents;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -47,6 +49,7 @@ class SwitchUserListener implements ListenerInterface
     private $role;
     private $logger;
     private $dispatcher;
+    private $tokenAttributeSource;
 
     /**
      * Constructor.
@@ -66,6 +69,11 @@ class SwitchUserListener implements ListenerInterface
         $this->role = $role;
         $this->logger = $logger;
         $this->dispatcher = $dispatcher;
+    }
+
+    public function setTokenAttributeSource(TokenAttributeSourceInterface $source)
+    {
+        $this->tokenAttributeSource = $source;
     }
 
     /**
@@ -130,6 +138,10 @@ class SwitchUserListener implements ListenerInterface
         $roles[] = new SwitchUserRole('ROLE_PREVIOUS_ADMIN', $this->securityContext->getToken());
 
         $token = new UsernamePasswordToken($user, $user->getPassword(), $this->providerKey, $roles);
+
+        if (null !== $this->tokenAttributeSource) {
+            $token->setAttributes($this->tokenAttributeSource->buildAttributes($request));
+        }
 
         if (null !== $this->dispatcher) {
             $switchEvent = new SwitchUserEvent($request, $token->getUser());

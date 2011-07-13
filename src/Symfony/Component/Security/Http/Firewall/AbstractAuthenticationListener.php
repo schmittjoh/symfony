@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Security\Http\Firewall;
 
+use Symfony\Component\Security\Http\Authentication\TokenAttributeSourceInterface;
 use Symfony\Component\Security\Http\Session\SessionAuthenticationStrategyInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationFailureHandlerInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationSuccessHandlerInterface;
@@ -27,7 +28,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Security\Http\Event\InteractiveLoginEvent;
-use Symfony\Component\Security\Http\SecurityEvents;
+use Symfony\Component\Security\SecurityEvents;
 use Symfony\Component\Security\Http\HttpUtils;
 
 /**
@@ -53,6 +54,7 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
     protected $logger;
     protected $authenticationManager;
     protected $providerKey;
+    protected $tokenAttributeSource;
     private $securityContext;
     private $sessionStrategy;
     private $dispatcher;
@@ -111,6 +113,17 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
     public function setRememberMeServices(RememberMeServicesInterface $rememberMeServices)
     {
         $this->rememberMeServices = $rememberMeServices;
+    }
+
+    /**
+     * Sets the TokenAttribteSource implementation to use for building the
+     * default attributes of the token.
+     *
+     * @param TokenAttributeSourceInterface $source
+     */
+    public function setTokenAttributeSource(TokenAttributeSourceInterface $source)
+    {
+        $this->tokenAttributeSource = $source;
     }
 
     /**

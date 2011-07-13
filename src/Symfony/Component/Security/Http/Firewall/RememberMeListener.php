@@ -2,6 +2,8 @@
 
 namespace Symfony\Component\Security\Http\Firewall;
 
+use Symfony\Component\Security\Http\Authentication\TokenAttributeSourceInterface;
+
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
@@ -14,7 +16,7 @@ use Symfony\Component\Security\Core\Exception\CookieTheftException;
 use Symfony\Component\Security\Core\SecurityContext;
 use Symfony\Component\Security\Http\RememberMe\RememberMeServicesInterface;
 use Symfony\Component\Security\Http\Event\InteractiveLoginEvent;
-use Symfony\Component\Security\Http\SecurityEvents;
+use Symfony\Component\Security\SecurityEvents;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /*
@@ -38,6 +40,7 @@ class RememberMeListener implements ListenerInterface
     private $authenticationManager;
     private $logger;
     private $dispatcher;
+    private $tokenAttributeSource;
 
     /**
      * Constructor
@@ -57,6 +60,11 @@ class RememberMeListener implements ListenerInterface
         $this->dispatcher = $dispatcher;
     }
 
+    public function setTokenAttributeSource(TokenAttributeSourceInterface $source)
+    {
+        $this->tokenAttributeSource = $source;
+    }
+
     /**
      * Handles remember-me cookie based authentication.
      *
@@ -71,6 +79,10 @@ class RememberMeListener implements ListenerInterface
         $request = $event->getRequest();
         if (null === $token = $this->rememberMeServices->autoLogin($request)) {
             return;
+        }
+
+        if (null !== $this->tokenAttributeSource) {
+            $token->setAttributes($this->tokenAttributeSource->buildAttributes($request));
         }
 
         try {

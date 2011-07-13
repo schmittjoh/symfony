@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Security\Http\Firewall;
 
+use Symfony\Component\Security\Http\Authentication\TokenAttributeSourceInterface;
+
 use Symfony\Component\Security\Core\SecurityContextInterface;
 use Symfony\Component\Security\Core\Authentication\AuthenticationManagerInterface;
 use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface;
@@ -32,6 +34,7 @@ class BasicAuthenticationListener implements ListenerInterface
     private $authenticationEntryPoint;
     private $logger;
     private $ignoreFailure;
+    private $tokenAttributeSource;
 
     public function __construct(SecurityContextInterface $securityContext, AuthenticationManagerInterface $authenticationManager, $providerKey, AuthenticationEntryPointInterface $authenticationEntryPoint, LoggerInterface $logger = null)
     {
@@ -45,6 +48,11 @@ class BasicAuthenticationListener implements ListenerInterface
         $this->authenticationEntryPoint = $authenticationEntryPoint;
         $this->logger = $logger;
         $this->ignoreFailure = false;
+    }
+
+    public function setTokenAttributeSource(TokenAttributeSourceInterface $source)
+    {
+        $this->tokenAttributeSource = $source;
     }
 
     /**
@@ -71,7 +79,13 @@ class BasicAuthenticationListener implements ListenerInterface
         }
 
         try {
-            $token = $this->authenticationManager->authenticate(new UsernamePasswordToken($username, $request->server->get('PHP_AUTH_PW'), $this->providerKey));
+            $token = new UsernamePasswordToken($username, $request->server->get('PHP_AUTH_PW'), $this->providerKey);
+
+            if (null !== $this->tokenAttributeSource) {
+                $token->setAttributes($this->tokenAttributeSource->buildAttributes($request));
+            }
+
+            $token = $this->authenticationManager->authenticate($token);
             $this->securityContext->setToken($token);
         } catch (AuthenticationException $failed) {
             $this->securityContext->setToken(null);

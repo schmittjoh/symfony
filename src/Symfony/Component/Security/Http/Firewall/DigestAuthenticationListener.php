@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Security\Http\Firewall;
 
+use Symfony\Component\Security\Http\Authentication\TokenAttributeSourceInterface;
+
 use Symfony\Component\Security\Core\SecurityContextInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Http\EntryPoint\DigestAuthenticationEntryPoint;
@@ -36,6 +38,7 @@ class DigestAuthenticationListener implements ListenerInterface
     private $providerKey;
     private $authenticationEntryPoint;
     private $logger;
+    private $tokenAttributeSource;
 
     public function __construct(SecurityContextInterface $securityContext, UserProviderInterface $provider, $providerKey, DigestAuthenticationEntryPoint $authenticationEntryPoint, LoggerInterface $logger = null)
     {
@@ -48,6 +51,11 @@ class DigestAuthenticationListener implements ListenerInterface
         $this->providerKey = $providerKey;
         $this->authenticationEntryPoint = $authenticationEntryPoint;
         $this->logger = $logger;
+    }
+
+    public function setTokenAttributeSource(TokenAttributeSourceInterface $source)
+    {
+        $this->tokenAttributeSource = $source;
     }
 
     /**
@@ -117,7 +125,13 @@ class DigestAuthenticationListener implements ListenerInterface
             $this->logger->info(sprintf('Authentication success for user "%s" with response "%s"', $digestAuth->getUsername(), $digestAuth->getResponse()));
         }
 
-        $this->securityContext->setToken(new UsernamePasswordToken($user, $user->getPassword(), $this->providerKey));
+        $token = new UsernamePasswordToken($user, $user->getPassword(), $this->providerKey);
+
+        if (null !== $this->tokenAttributeSource) {
+            $token->setAttributes($this->tokenAttributeSource->buildAttributes($request));
+        }
+
+        $this->securityContext->setToken($token);
     }
 
     private function fail(GetResponseEvent $event, Request $request, AuthenticationException $authException)
