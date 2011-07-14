@@ -9,6 +9,29 @@ timeline closely anyway.
 RC4 to RC5
 ----------
 
+* `EntityUserProvider` class has been moved and FQCN changed from
+  `Symfony\Component\Security\Core\User\EntityUserProvider` to
+  `Symfony\Bridge\Doctrine\Security\User\EntityUserProvider`.
+
+* Cookies access from `HeaderBag` has been removed. Accessing Request cookies
+  must be done via `Request::$cookies``.
+
+* `ResponseHeaderBag::getCookie()` and `ResponseHeaderBag::hasCookie()`
+  methods were removed.
+
+* The method `ResponseHeaderBag::getCookies()` now supports an argument for the
+  returned format (possible values are `ResponseHeaderBag::COOKIES_FLAT`
+  (default value) or `ResponseHeaderBag::COOKIES_ARRAY`).
+
+    * `ResponseHeaderBag::COOKIES_FLAT` returns a simple array (the array keys
+      are not cookie names anymore):
+
+        * array(0 => `a Cookie instance`, 1 => `another Cookie instance`)
+
+    * `ResponseHeaderBag::COOKIES_ARRAY` returns a multi-dimensional array:
+
+        * array(`the domain` => array(`the path` => array(`the cookie name` => `a Cookie instance`)))
+
 * Removed the guesser for the Choice constraint as the constraint only knows
   about the valid keys, and not their values.
 
