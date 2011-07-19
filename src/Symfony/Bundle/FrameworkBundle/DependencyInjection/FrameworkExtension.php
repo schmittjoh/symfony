@@ -22,7 +22,6 @@ use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\Config\Definition\Processor;
 
 /**
  * FrameworkExtension.
@@ -56,9 +55,8 @@ class FrameworkExtension extends Extension
             $container->setAlias('debug.event_dispatcher', 'event_dispatcher');
         }
 
-        $processor = new Processor();
         $configuration = new Configuration($container->getParameter('kernel.debug'));
-        $config = $processor->processConfiguration($configuration, $configs);
+        $config = $this->processConfiguration($configuration, $configs);
 
         if (isset($config['charset'])) {
             $container->setParameter('kernel.charset', $config['charset']);
@@ -235,7 +233,7 @@ class FrameworkExtension extends Extension
         $loader->load('routing.xml');
 
         $container->setParameter('router.resource', $config['resource']);
-        $router = $container->findDefinition('router');
+        $router = $container->findDefinition('router.default');
 
         if (isset($config['type'])) {
             $argument = $router->getArgument(2);
@@ -252,7 +250,7 @@ class FrameworkExtension extends Extension
             'Symfony\\Component\\Routing\\Matcher\\UrlMatcher',
             'Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface',
             'Symfony\\Component\\Routing\\Generator\\UrlGenerator',
-            $container->findDefinition('router')->getClass(),
+            $container->findDefinition('router.default')->getClass(),
         ));
     }
 
@@ -468,8 +466,8 @@ class FrameworkExtension extends Extension
     {
         if (!empty($config['enabled'])) {
             // Use the "real" translator instead of the identity default
-            $container->setAlias('translator', 'translator.real');
-            $translator = $container->findDefinition('translator.real');
+            $container->setAlias('translator', 'translator.default');
+            $translator = $container->findDefinition('translator.default');
             $translator->addMethodCall('setFallbackLocale', array($config['fallback']));
 
             // Discover translation directories
