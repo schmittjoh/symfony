@@ -18,9 +18,9 @@ class CookieTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider getTestsForToFromString
      */
-    public function testToFromString($cookie)
+    public function testToFromString($cookie, $url = null)
     {
-        $this->assertEquals($cookie, (string) Cookie::fromString($cookie));
+        $this->assertEquals($cookie, (string) Cookie::fromString($cookie, $url));
     }
 
     public function getTestsForToFromString()
@@ -29,12 +29,18 @@ class CookieTest extends \PHPUnit_Framework_TestCase
             array('foo=bar'),
             array('foo=bar; path=/foo'),
             array('foo=bar; domain=google.com'),
-            array('foo=bar; secure'),
+            array('foo=bar; domain=example.com; secure', 'https://example.com/'),
             array('foo=bar; httponly'),
-            array('foo=bar; domain=google.com; path=/foo; secure; httponly'),
+            array('foo=bar; domain=google.com; path=/foo; secure; httponly', 'https://google.com/'),
             array('foo=bar=baz'),
             array('foo=bar%3Dbaz'),
         );
+    }
+
+    public function testFromStringIgnoreSecureFlag()
+    {
+        $this->assertFalse(Cookie::fromString('foo=bar; secure')->isSecure());
+        $this->assertFalse(Cookie::fromString('foo=bar; secure', 'http://example.com/')->isSecure());
     }
 
     /**

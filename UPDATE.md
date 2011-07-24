@@ -9,6 +9,16 @@ timeline closely anyway.
 RC4 to RC5
 ----------
 
+* The `MapFileClassLoader` has been removed in favor of a new
+  `MapClassLoader`.
+
+* The `exception_controller` setting has been moved from the `framework`
+  section to the `twig` one.
+
+* The custom error pages must now reference `TwigBundle` instead of
+  `FrameworkBundle` (see
+  http://symfony.com/doc/2.0/cookbook/controller/error_pages.html)
+
 * `EntityUserProvider` class has been moved and FQCN changed from
   `Symfony\Component\Security\Core\User\EntityUserProvider` to
   `Symfony\Bridge\Doctrine\Security\User\EntityUserProvider`.

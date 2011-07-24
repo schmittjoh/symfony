@@ -20,7 +20,6 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Loader\IniFileLoader;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Loader\ClosureLoader;
-use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
@@ -58,7 +57,7 @@ abstract class Kernel implements KernelInterface
     protected $startTime;
     protected $classes;
 
-    const VERSION = '2.0.0-RC5-DEV';
+    const VERSION = '2.0.0-DEV';
 
     /**
      * Constructor.
@@ -397,18 +396,17 @@ abstract class Kernel implements KernelInterface
      */
     public function loadClassCache($name = 'classes', $extension = '.php')
     {
-        if (!$this->booted) {
-            $this->boot();
-        }
-
-        if ($this->classes) {
-            ClassCollectionLoader::load($this->classes, $this->getCacheDir(), $name, $this->debug, true, $extension);
+        if (!$this->booted && file_exists($this->getCacheDir().'/classes.map')) {
+            ClassCollectionLoader::load(include($this->getCacheDir().'/classes.map'), $this->getCacheDir(), $name, $this->debug, false, $extension);
         }
     }
 
-    public function addClassesToCache(array $classes)
+    /**
+     * Used internally.
+     */
+    public function setClassCache(array $classes)
     {
-        $this->classes = array_unique(array_merge($this->classes, $classes));
+        file_put_contents($this->getCacheDir().'/classes.map', sprintf('<?php return %s;', var_export($classes, true)));
     }
 
     /**
@@ -649,8 +647,6 @@ abstract class Kernel implements KernelInterface
 
         $container->addCompilerPass(new AddClassesToCachePass($this));
         $container->compile();
-
-        $this->addClassesToCache($container->getParameter('kernel.compiled_classes'));
 
         return $container;
     }
