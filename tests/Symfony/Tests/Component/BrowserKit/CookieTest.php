@@ -27,7 +27,6 @@ class CookieTest extends \PHPUnit_Framework_TestCase
     {
         return array(
             array('foo=bar'),
-            array('foo=bar; expires=Fri, 31-Dec-2010 23:59:59 GMT'),
             array('foo=bar; path=/foo'),
             array('foo=bar; domain=google.com'),
             array('foo=bar; secure'),
@@ -35,6 +34,24 @@ class CookieTest extends \PHPUnit_Framework_TestCase
             array('foo=bar; domain=google.com; path=/foo; secure; httponly'),
             array('foo=bar=baz'),
             array('foo=bar%3Dbaz'),
+        );
+    }
+
+    /**
+     * @dataProvider getExpireCookieStrings
+     */
+    public function testFromStringAcceptsSeveralExpiresDateFormats($cookie)
+    {
+        $this->assertEquals(1596185377, Cookie::fromString($cookie)->getExpiresTime());
+    }
+
+    public function getExpireCookieStrings()
+    {
+        return array(
+            array('foo=bar; expires=Fri, 31-Jul-2020 08:49:37 GMT'),
+            array('foo=bar; expires=Fri, 31 Jul 2020 08:49:37 GMT'),
+            array('foo=bar; expires=Friday, 31-Jul-20 08:49:37 GMT'),
+            array('foo=bar; expires=Fri Jul 31 08:49:37 2020'),
         );
     }
 
