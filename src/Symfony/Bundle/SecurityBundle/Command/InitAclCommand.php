@@ -18,9 +18,23 @@ class InitAclCommand extends ContainerAwareCommand
 {
     protected function configure()
     {
-        $this->setName('init:acl');
-        $this->addOption('dump-sql', null, InputOption::VALUE_NONE, 'Whether to dump the SQL statement');
-        $this->addOption('force', null, InputOption::VALUE_NONE, 'Whether to execute the SQL statements');
+        $this
+            ->setName('init:acl')
+            ->addOption('dump-sql', null, InputOption::VALUE_NONE, 'Whether to dump the SQL statement')
+            ->addOption('force', null, InputOption::VALUE_NONE, 'Whether to execute the SQL statements')
+            ->setDescription('Mounts ACL tables in the database')
+            ->setHelp(<<<EOT
+The <info>init:acl</info> command mounts ACL tables in the database.
+
+<info>php app/console ini:acl</info>
+
+The name of the DBAL connection must be configured in your <info>app/config/security.yml</info> configuration file in the <info>security.acl.connection</info> variable.
+
+<info>security:
+    acl:
+        connection: default</info>
+EOT
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
