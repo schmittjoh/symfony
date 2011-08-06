@@ -114,13 +114,11 @@ class PersistentTokenBasedRememberMeServices extends AbstractRememberMeServices
         $tokenValue = base64_encode($this->secureRandom->nextBytes(32));
 
         $this->tokenProvider->createNewToken(
-            new PersistentToken(
-                get_class($user = $token->getUser()),
-                $user->getUsername(),
-                $series,
-                $tokenValue,
-                new \DateTime()
-            )
+            get_class($user = $token->getUser()),
+            $user->getUsername(),
+            $series,
+            $tokenValue,
+            new \DateTime()
         );
 
         $response->headers->setCookie(

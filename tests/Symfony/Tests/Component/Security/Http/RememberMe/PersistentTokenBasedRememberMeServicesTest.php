@@ -21,7 +21,6 @@ use Symfony\Component\Security\Http\RememberMe\RememberMeServicesInterface;
 use Symfony\Component\Security\Core\Authentication\Token\RememberMeToken;
 use Symfony\Component\HttpFoundation\HeaderBag;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
-use Symfony\Component\Security\Core\Authentication\RememberMe\PersistentToken;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -82,7 +81,7 @@ class PersistentTokenBasedRememberMeServicesTest extends \PHPUnit_Framework_Test
         $tokenProvider
             ->expects($this->once())
             ->method('loadTokenBySeries')
-            ->will($this->returnValue(new PersistentToken('fooclass', 'fooname', 'fooseries', 'foovalue', new \DateTime())))
+            ->will($this->returnValue($this->createPersistentToken('fooclass', 'foouser', 'fooseries', 'foovalue', new \DateTime)))
         ;
         $service->setTokenProvider($tokenProvider);
 
@@ -109,7 +108,7 @@ class PersistentTokenBasedRememberMeServicesTest extends \PHPUnit_Framework_Test
         $tokenProvider
             ->expects($this->once())
             ->method('loadTokenBySeries')
-            ->will($this->returnValue(new PersistentToken('fooclass', 'foouser', 'fooseries', 'anotherFooValue', new \DateTime())))
+            ->will($this->returnValue($this->createPersistentToken('fooclass', 'foouser', 'fooseries', 'anotherFooValue', new \DateTime())))
         ;
 
         $tokenProvider
@@ -138,7 +137,7 @@ class PersistentTokenBasedRememberMeServicesTest extends \PHPUnit_Framework_Test
             ->expects($this->once())
             ->method('loadTokenBySeries')
             ->with($this->equalTo('fooseries'))
-            ->will($this->returnValue(new PersistentToken('fooclass', 'username', 'fooseries', 'foovalue', new \DateTime('yesterday'))))
+            ->will($this->returnValue($this->createPersistentToken('fooclass', 'username', 'fooseries', 'foovalue', new \DateTime('yesterday'))))
         ;
         $service->setTokenProvider($tokenProvider);
 
@@ -172,7 +171,7 @@ class PersistentTokenBasedRememberMeServicesTest extends \PHPUnit_Framework_Test
             ->expects($this->once())
             ->method('loadTokenBySeries')
             ->with($this->equalTo('fooseries'))
-            ->will($this->returnValue(new PersistentToken('fooclass', 'foouser', 'fooseries', 'foovalue', new \DateTime())))
+            ->will($this->returnValue($this->createPersistentToken('fooclass', 'foouser', 'fooseries', 'foovalue', new \DateTime())))
         ;
         $service->setTokenProvider($tokenProvider);
 
@@ -339,5 +338,37 @@ class PersistentTokenBasedRememberMeServicesTest extends \PHPUnit_Framework_Test
         ;
 
         return $provider;
+    }
+
+    private function createPersistentToken($class, $username, $series, $token, \DateTime $lastUsed)
+    {
+        $persistentToken = $this->getMock('Symfony\Component\Security\Core\Authentication\RememberMe\PersistentTokenInterface');
+        $persistentToken
+            ->expects($this->any())
+            ->method('getClass')
+            ->will($this->returnValue($class))
+        ;
+        $persistentToken
+            ->expects($this->any())
+            ->method('getUsername')
+            ->will($this->returnValue($username))
+        ;
+        $persistentToken
+            ->expects($this->any())
+            ->method('getSeries')
+            ->will($this->returnValue($series))
+        ;
+        $persistentToken
+            ->expects($this->any())
+            ->method('getTokenValue')
+            ->will($this->returnValue($token))
+        ;
+        $persistentToken
+            ->expects($this->any())
+            ->method('getLastUsed')
+            ->will($this->returnValue($lastUsed))
+        ;
+
+        return $persistentToken;
     }
 }
