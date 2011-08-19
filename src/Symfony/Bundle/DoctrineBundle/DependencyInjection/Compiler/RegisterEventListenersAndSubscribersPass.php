@@ -82,6 +82,10 @@ class RegisterEventListenersAndSubscribersPass implements CompilerPassInterface
                         }
                         $instance['event'] = array($instance['event']);
 
+                        if (isset($instance['lazy']) && $instance['lazy']) {
+                            $this->container->getDefinition($id)->setPublic(true);
+                        }
+
                         if (isset($grouped[$con][$id])) {
                             $grouped[$con][$id]['event'] = array_merge($grouped[$con][$id]['event'], $instance['event']);
                             continue;
