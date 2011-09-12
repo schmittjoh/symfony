@@ -23,11 +23,19 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * added support for the PATCH method in Request
  * removed the ContentTypeMimeTypeGuesser class as it is deprecated and never used on PHP 5.3
  * added ResponseHeaderBag::makeDisposition() (implements RFC 6266)
+ * made mimetype to extension conversion configurable
+
+### HttpKernel
+
+ * added a File-based profiler storage
+ * added a MongoDB-based profiler storage
 
 ### Translation
 
  * added dumpers for translation catalogs
+ * added support for QT translations
 
 ### Validator
 
+ * improved the ImageValidator with min width, max width, min height, and max height constraints
  * added support for MIME with wildcard in FileValidator
