@@ -18,6 +18,7 @@ final class DbalSessionStorageSchema extends Schema
         parent::__construct();
 
         $this->tableName = $tableName;
+        $this->addSessionTable();
     }
 
     public function addToSchema(Schema $schema)
