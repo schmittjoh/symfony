@@ -211,6 +211,14 @@ class Request
             $defaults['HTTP_HOST'] = $defaults['HTTP_HOST'].':'.$components['port'];
         }
 
+        if (isset($components['user'])) {
+            $defaults['PHP_AUTH_USER'] = $components['user'];
+        }
+
+        if (isset($components['pass'])) {
+            $defaults['PHP_AUTH_PW'] = $components['pass'];
+        }
+
         if (!isset($components['path'])) {
             $components['path'] = '';
         }
@@ -570,6 +578,26 @@ class Request
     }
 
     /**
+     * Returns the user.
+     *
+     * @return string|null
+     */
+    public function getUser()
+    {
+        return $this->server->get('PHP_AUTH_USER');
+    }
+
+    /**
+     * Returns the password.
+     *
+     * @return string|null
+     */
+    public function getPassword()
+    {
+        return $this->server->get('PHP_AUTH_PW');
+    }
+
+    /**
      * Returns the HTTP host being requested.
      *
      * The port name will be appended to the host if it's non-standard.
@@ -622,7 +650,20 @@ class Request
             $qs = '?'.$qs;
         }
 
-        return $this->getScheme().'://'.$this->getHttpHost().$this->getBaseUrl().$this->getPathInfo().$qs;
+        $auth = '';
+        if ($user = $this->getUser()) {
+            $auth = $user;
+        }
+
+        if ($pass = $this->getPassword()) {
+           $auth .= ":$pass";
+        }
+
+        if ('' !== $auth) {
+           $auth .= '@';
+        }
+
+        return $this->getScheme().'://'.$auth.$this->getHttpHost().$this->getBaseUrl().$this->getPathInfo().$qs;
     }
 
     /**
