@@ -113,14 +113,6 @@ class Parser
                     throw $e;
                 }
 
-                if (isset($data[$key])) {
-                    $e = new ParseException(sprintf('The key "%s" was encountered more than once.', $key));
-                    $e->setParsedLine($this->getRealCurrentLineNb() + 1);
-                    $e->setSnippet($this->currentLine);
-
-                    throw $e;
-                }
-
                 if ('<<' === $key) {
                     if (isset($values['value']) && '*' === substr($values['value'], 0, 1)) {
                         $isInPlace = substr($values['value'], 1);
