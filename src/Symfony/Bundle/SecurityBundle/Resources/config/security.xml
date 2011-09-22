@@ -145,6 +145,7 @@
         </service>
         <service id="security.util.secure_random_schema_listener" class="%security.util.secure_random_schema_listener.class%" public="false">
             <argument type="service" id="security.util.secure_random_schema" />
+        </service>
 
         <!-- Validator -->
         <service id="security.validator.user_password" class="%security.validator.user_password.class%">
