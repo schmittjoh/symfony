@@ -43,6 +43,8 @@
         
         <parameter key="security.util.secure_random_schema.class">Symfony\Component\Security\Core\Util\SecureRandomSchema</parameter>
         <parameter key="security.util.secure_random_schema_listener.class">Symfony\Bundle\SecurityBundle\EventListener\SecureRandomSchemaListener</parameter>
+
+        <parameter key="security.validator.user_password.class">Symfony\Bundle\SecurityBundle\Validator\Constraint\UserPasswordValidator</parameter>
     </parameters>
 
     <services>
@@ -143,6 +145,12 @@
         </service>
         <service id="security.util.secure_random_schema_listener" class="%security.util.secure_random_schema_listener.class%" public="false">
             <argument type="service" id="security.util.secure_random_schema" />
+
+        <!-- Validator -->
+        <service id="security.validator.user_password" class="%security.validator.user_password.class%">
+            <tag name="validator.constraint_validator" alias="security.validator.user_password" />
+            <argument type="service" id="security.context" />
+            <argument type="service" id="security.encoder_factory" />
         </service>
     </services>
 </container>
