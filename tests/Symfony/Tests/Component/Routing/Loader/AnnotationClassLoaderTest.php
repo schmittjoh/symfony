@@ -18,7 +18,6 @@ use Symfony\Component\Routing\Loader\AnnotationClassLoader;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
-require_once __DIR__.'/../Fixtures/AnnotatedClasses/AbstractClass.php';
 require_once __DIR__.'/AbstractAnnotationLoaderTest.php';
 
 class AnnotationClassLoaderTest extends AbstractAnnotationLoaderTest
@@ -36,14 +35,6 @@ class AnnotationClassLoaderTest extends AbstractAnnotationLoaderTest
     public function testLoadMissingClass()
     {
         $this->loader->load('MissingClass');
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testLoadAbstractClass()
-    {
-        $this->loader->load('Symfony\Tests\Component\Routing\Fixtures\AnnotatedClasses\AbstractClass');
     }
 
     public function testLoadAbstractControllerClass()
