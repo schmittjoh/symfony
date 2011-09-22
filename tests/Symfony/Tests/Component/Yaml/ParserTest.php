@@ -134,20 +134,6 @@ EOF
             }
         }
     }
-
-    /**
-     * @expectedException Symfony\Component\Yaml\Exception\ParseException
-     */
-    public function testSameKeyMultipleTimesException()
-    {
-        $this->parser->parse('
-foo:
-   bar: baz
-
-foo:
-   bar: baz
-');
-    }
 }
 
 class B
