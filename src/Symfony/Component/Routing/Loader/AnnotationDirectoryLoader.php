@@ -23,13 +23,6 @@ use Symfony\Component\Config\Resource\DirectoryResource;
  */
 class AnnotationDirectoryLoader extends AnnotationFileLoader
 {
-    private $reader;
-
-    public function setReader(Reader $reader)
-    {
-        $this->reader = $reader;
-    }
-
     /**
      * Loads from annotations from a directory.
      *
