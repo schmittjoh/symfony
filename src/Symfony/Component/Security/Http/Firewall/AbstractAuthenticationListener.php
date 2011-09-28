@@ -179,11 +179,11 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
             }
         } catch (AuthenticationException $e) {
             if (null !== $this->logger) {
-                $this->logger->info(sprintf('Authentication request failed: %s', $failed->getMessage()));
+                $this->logger->info(sprintf('Authentication request failed: %s', $e->getMessage()));
             }
 
             $this->securityContext->setToken(null);
-            $response = $this->failureHandler->onAuthenticationFailure($request, $failed);
+            $response = $this->failureHandler->onAuthenticationFailure($request, $e);
         }
 
         $event->setResponse($response);

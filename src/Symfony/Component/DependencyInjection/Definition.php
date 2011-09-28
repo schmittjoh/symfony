@@ -15,6 +15,7 @@ namespace Symfony\Component\DependencyInjection;
  * Definition represents a service definition.
  *
  * @author Fabien Potencier <fabien@symfony.com>
+ * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  *
  * @api
  */
@@ -33,6 +34,7 @@ class Definition
     private $public;
     private $synthetic;
     private $abstract;
+    private $initMethod;
 
     protected $arguments;
 
@@ -626,5 +628,17 @@ class Definition
     public function getConfigurator()
     {
         return $this->configurator;
+    }
+
+    public function setInitMethod($method)
+    {
+        $this->initMethod = $method;
+
+        return $this;
+    }
+
+    public function getInitMethod()
+    {
+        return $this->initMethod;
     }
 }

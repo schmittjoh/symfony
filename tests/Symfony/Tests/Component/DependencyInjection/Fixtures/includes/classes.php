@@ -29,6 +29,10 @@ class BazClass
     static public function configureStatic1()
     {
     }
+
+    public function fooBar()
+    {
+    }
 }
 
 class BarUserClass

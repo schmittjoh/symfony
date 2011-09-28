@@ -129,6 +129,9 @@ class XmlDumper extends Dumper
         if (!$definition->isPublic()) {
             $service->setAttribute('public', 'false');
         }
+        if ($definition->getInitMethod()) {
+            $service->setAttribute('init-method', $definition->getInitMethod());
+        }
 
         foreach ($definition->getTags() as $name => $tags) {
             foreach ($tags as $attributes) {

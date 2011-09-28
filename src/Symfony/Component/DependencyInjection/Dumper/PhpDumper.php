@@ -415,6 +415,9 @@ class PhpDumper extends Dumper
             if ($iDefinition->getConfigurator()) {
                 $code .= $this->addServiceConfigurator(null, $iDefinition, (string) $this->definitionVariables->offsetGet($iDefinition));
             }
+            if ($iDefinition->getInitMethod()) {
+                $code .= $this->addServiceInitMethod(null, $definition, (string) $this->definitionVariables->offsetGet($iDefinition));
+            }
         }
 
         if ('' !== $code) {
@@ -447,6 +450,15 @@ class PhpDumper extends Dumper
         }
 
         return sprintf("        %s(\$%s);\n", $callable, $variableName);
+    }
+
+    private function addServiceInitMethod($id, $definition, $variableName = 'instance')
+    {
+        if (!$method = $definition->getInitMethod()) {
+            return '';
+        }
+
+        return sprintf("        \$%s->%s();\n", $variableName, $method);
     }
 
     /**
@@ -529,6 +541,7 @@ EOF;
                 $this->addServiceMethodCalls($id, $definition).
                 $this->addServiceProperties($id, $definition).
                 $this->addServiceConfigurator($id, $definition).
+                $this->addServiceInitMethod($id, $definition).
                 $this->addServiceReturn($id, $definition)
             ;
         }

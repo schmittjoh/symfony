@@ -25,6 +25,7 @@ services:
     foo.baz:
         class: %baz_class%
         factory_method: getInstance
+        init_method: fooBar
         configurator: ['%baz_class%', configureStatic1]
     foo_bar:
         class: %foo_class%

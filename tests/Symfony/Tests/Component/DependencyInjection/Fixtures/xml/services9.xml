@@ -31,7 +31,7 @@
       <argument>%foo_bar%</argument>
       <configurator service="foo.baz" method="configure"/>
     </service>
-    <service id="foo.baz" class="%baz_class%" factory-method="getInstance">
+    <service id="foo.baz" class="%baz_class%" factory-method="getInstance" init-method="fooBar">
       <configurator class="%baz_class%" method="configureStatic1"/>
     </service>
     <service id="foo_bar" class="%foo_class%"/>

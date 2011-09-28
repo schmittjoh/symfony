@@ -146,6 +146,13 @@ class DefinitionDecorator extends Definition
         return parent::setPublic($boolean);
     }
 
+    public function setInitMethod($method)
+    {
+        $this->changes['init_method'] = true;
+
+        return parent::setInitMethod($method);
+    }
+
     /**
      * You should always use this method when overwriting existing arguments
      * of the parent definition.

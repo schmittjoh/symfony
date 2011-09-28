@@ -81,6 +81,10 @@ class YamlDumper extends Dumper
             $code .= sprintf("        factory_service: %s\n", $definition->getFactoryService());
         }
 
+        if ($definition->getInitMethod()) {
+            $code .= sprintf("        init_method: %s\n", $definition->getInitMethod());
+        }
+
         if ($definition->getArguments()) {
             $code .= sprintf("        arguments: %s\n", Yaml::dump($this->dumpValue($definition->getArguments()), 0));
         }

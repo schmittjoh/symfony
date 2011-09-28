@@ -31,6 +31,7 @@ $container->
     register('foo.baz', '%baz_class%')->
     setFactoryClass('%baz_class%')->
     setFactoryMethod('getInstance')->
+    setInitMethod('fooBar')->
     setConfigurator(array('%baz_class%', 'configureStatic1'))
 ;
 $container->register('foo_bar', '%foo_class%');

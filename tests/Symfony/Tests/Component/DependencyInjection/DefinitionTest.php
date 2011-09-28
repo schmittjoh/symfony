@@ -238,4 +238,13 @@ class DefinitionTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($def, $def->setProperty('foo', 'bar'));
         $this->assertEquals(array('foo' => 'bar'), $def->getProperties());
     }
+
+    public function testSetInitMethod()
+    {
+        $def = new Definition('stdClass');
+
+        $this->assertNull($def->getInitMethod());
+        $this->assertSame($def, $def->setInitMethod('foo'));
+        $this->assertEquals('foo', $def->getInitMethod());
+    }
 }

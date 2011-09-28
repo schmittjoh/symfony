@@ -86,6 +86,7 @@ class ProjectServiceContainer extends Container
         $this->services['foo.baz'] = $instance = call_user_func(array($this->getParameter('baz_class'), 'getInstance'));
 
         call_user_func(array($this->getParameter('baz_class'), 'configureStatic1'), $instance);
+        $instance->fooBar();
 
         return $instance;
     }
