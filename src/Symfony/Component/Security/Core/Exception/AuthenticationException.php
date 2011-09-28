@@ -37,6 +37,27 @@ class AuthenticationException extends \RuntimeException implements \Serializable
         $this->extraInformation = $extraInformation;
     }
 
+    /**
+     * Returns the message template.
+     *
+     * @Desc("An authentication error occurred.")
+     * @return string
+     */
+    public function getMessageTemplate()
+    {
+        return 'security.authentication_error.general';
+    }
+
+    /**
+     * Returns an array of parameters for the message.
+     *
+     * @return array
+     */
+    public function getMessageParameters()
+    {
+        return array();
+    }
+
     public function serialize()
     {
         return serialize(array(

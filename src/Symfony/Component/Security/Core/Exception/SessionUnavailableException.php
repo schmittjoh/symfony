@@ -24,4 +24,9 @@ namespace Symfony\Component\Security\Core\Exception;
  */
 class SessionUnavailableException extends AuthenticationException
 {
+    /** @Desc("The session has timed-out, or you have disabled cookies.") */
+    public function getMessageTemplate()
+    {
+        return 'security.authentication_error.session_unavailable';
+    }
 }

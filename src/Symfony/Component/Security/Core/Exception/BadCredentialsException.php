@@ -22,4 +22,10 @@ class BadCredentialsException extends AuthenticationException
     {
         parent::__construct($message, null, $code, $previous);
     }
+
+    /** @Desc("These credentials were invalid.") */
+    public function getMessageTemplate()
+    {
+        return 'security.authentication_error.bad_credentials';
+    }
 }

@@ -18,4 +18,9 @@ namespace Symfony\Component\Security\Core\Exception;
  */
 class CredentialsExpiredException extends AccountStatusException
 {
+    /** @Desc("These credentials are expired.") */
+    public function getMessageTemplate()
+    {
+        return 'security.authentication_error.credentials_expired';
+    }
 }
