@@ -18,9 +18,9 @@ namespace Symfony\Component\Security\Core\Exception;
  */
 class UsernameNotFoundException extends AuthenticationException
 {
-    /** @Desc("This username was not found.") */
     public function getMessageTemplate()
     {
+    	/** @Desc("This username was not found.") */
         return 'security.authentication_error.username_not_found';
     }
 }

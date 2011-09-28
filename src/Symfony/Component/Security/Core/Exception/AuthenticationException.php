@@ -40,11 +40,11 @@ class AuthenticationException extends \RuntimeException implements \Serializable
     /**
      * Returns the message template.
      *
-     * @Desc("An authentication error occurred.")
      * @return string
      */
     public function getMessageTemplate()
     {
+        /** @Desc("An authentication error occurred.") */
         return 'security.authentication_error.general';
     }
 

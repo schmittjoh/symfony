@@ -18,9 +18,9 @@ namespace Symfony\Component\Security\Core\Exception;
  */
 class LockedException extends AccountStatusException
 {
-    /** @Desc("This account is locked.") */
     public function getMessageTemplate()
     {
+    	/** @Desc("This account is locked.") */
         return 'security.authentication_error.account_locked';
     }
 }

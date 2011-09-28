@@ -18,9 +18,9 @@ namespace Symfony\Component\Security\Core\Exception;
  */
 class DisabledException extends AccountStatusException
 {
-    /** @Desc("This account is disabled.") */
     public function getMessageTemplate()
     {
+    	/** @Desc("This account is disabled.") */
         return 'security.authentication_error.account_disabled';
     }
 }

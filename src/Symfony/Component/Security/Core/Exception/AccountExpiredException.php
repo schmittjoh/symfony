@@ -18,9 +18,9 @@ namespace Symfony\Component\Security\Core\Exception;
  */
 class AccountExpiredException extends AccountStatusException
 {
-    /** @Desc("This account has expired.") */
     public function getMessageTemplate()
     {
+        /** @Desc("This account has expired.") */
         return 'security.authentication_error.account_expired';
     }
 }
