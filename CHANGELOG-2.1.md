@@ -16,6 +16,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### FrameworkBundle
 
+ * added Controller::getUser()
  * [BC BREAK] assets_base_urls and base_urls merging strategy has changed
  * changed the default profiler storage to use the filesystem instead of SQLite
  * added support for placeholders in route defaults and requirements (replaced by the value set in the service container)
@@ -34,6 +35,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### DomCrawler
 
+ * added a way to get parsing errors for Crawler::addHtmlContent() and Crawler::addXmlContent() via libxml functions
  * added support for submitting a form without a submit button
 
 ### Finder
@@ -42,10 +44,12 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### Form
 
+ * added Form::getErrorsAsString() to help debugging forms
  * allowed setting different options for RepeatedType fields (like the label)
 
 ### HttpFoundation
 
+ * added a generic access to the PHP built-in filter mechanism: ParameterBag::filter()
  * made FileBinaryMimeTypeGuesser command configurable
  * added Request::getUser() and Request::getPassword()
  * added support for the PATCH method in Request
