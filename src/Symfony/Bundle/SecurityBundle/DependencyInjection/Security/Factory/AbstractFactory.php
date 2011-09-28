@@ -12,7 +12,6 @@
 namespace Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory;
 
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
-
 use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -27,15 +26,14 @@ use Symfony\Component\DependencyInjection\Reference;
 abstract class AbstractFactory implements SecurityFactoryInterface
 {
     protected $options = array(
-        'check_path'                     => '/login_check',
-        'login_path'                     => '/login',
-        'use_forward'                    => false,
+        'check_path' => '/login_check',
+        'login_path' => '/login',
         'always_use_default_target_path' => false,
-        'default_target_path'            => '/',
-        'target_path_parameter'          => '_target_path',
-        'use_referer'                    => false,
-        'failure_path'                   => null,
-        'failure_forward'                => false,
+        'default_target_path' => '/',
+        'target_path_parameter' => '_target_path',
+        'use_referer' => false,
+        'failure_path' => null,
+        'failure_forward' => false,
     );
 
     public function create(ContainerBuilder $container, $id, $config, $userProviderId, $defaultEntryPointId)
@@ -149,17 +147,47 @@ abstract class AbstractFactory implements SecurityFactoryInterface
         $listenerId = $this->getListenerId();
         $listener = new DefinitionDecorator($listenerId);
         $listener->replaceArgument(4, $id);
-        $listener->replaceArgument(5, array_intersect_key($config, $this->options));
 
         // success handler
-        if (isset($config['success_handler'])) {
-            $listener->replaceArgument(6, new Reference($config['success_handler']));
+        if (!isset($config['success_handler'])) {
+            $def = $container->setDefinition('security.authentication.success_handler.'.$id, new DefinitionDecorator('security.authentication.default_success_handler'));
+
+            if ($this->options['target_path_parameter'] !== $config['target_path_parameter']) {
+                $def->addMethodCall('setTargetPathParameter', array($config['target_path_parameter']));
+            }
+            if ($this->options['always_use_default_target_path'] !== $config['always_use_default_target_path']) {
+                $def->addMethodCall('setAlwaysUseDefaultTargetPath', array($config['always_use_default_target_path']));
+            }
+            if ($this->options['default_target_path'] !== $config['default_target_path']) {
+                $def->addMethodCall('setDefaultTargetPath', array($config['default_target_path']));
+            }
+            if ($this->options['use_referer'] !== $config['use_referer']) {
+                $def->addMethodCall('setUseReferer', array($config['use_referer']));
+            }
         }
+        $listener->replaceArgument(5, new Reference(
+            isset($config['success_handler']) ? $config['success_handler']
+                : 'security.authentication.success_handler.'.$id
+        ));
 
         // failure handler
-        if (isset($config['failure_handler'])) {
-            $listener->replaceArgument(7, new Reference($config['failure_handler']));
+        if (!isset($config['failure_handler'])) {
+            $def = $container->setDefinition('security.authentication.failure_handler.'.$id, new DefinitionDecorator('security.authentication.default_failure_handler'));
+
+            if ($this->options['failure_forward'] !== $config['failure_forward']) {
+                $def->addMethodCall('setFailureForward', array($config['failure_forward']));
+            }
+            if ($this->options['failure_path'] !== $config['failure_path']) {
+                $def->addMethodCall('setFailurePath', array($config['failure_path']));
+            }
         }
+
+        $listener->replaceArgument(6, new Reference(
+            isset($config['failure_handler']) ? $config['failure_handler']
+                : 'security.authentication.failure_handler.'.$id
+        ));
+
+        $listener->addMethodCall('setCheckPath', array($config['check_path']));
 
         $listenerId .= '.'.$id;
         $container->setDefinition($listenerId, $listener);

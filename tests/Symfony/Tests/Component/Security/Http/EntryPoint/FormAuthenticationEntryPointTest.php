@@ -21,7 +21,9 @@ class FormAuthenticationEntryPointTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($response))
         ;
 
-        $entryPoint = new FormAuthenticationEntryPoint($httpKernel, $httpUtils, '/the/login/path', false);
+        $entryPoint = new FormAuthenticationEntryPoint($httpKernel, $httpUtils);
+        $entryPoint->setLoginPath('/the/login/path');
+        $entryPoint->setUseForward(false);
 
         $this->assertEquals($response, $entryPoint->start($request));
     }
@@ -48,7 +50,9 @@ class FormAuthenticationEntryPointTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($response))
         ;
 
-        $entryPoint = new FormAuthenticationEntryPoint($httpKernel, $httpUtils, '/the/login/path', true);
+        $entryPoint = new FormAuthenticationEntryPoint($httpKernel, $httpUtils);
+        $entryPoint->setLoginPath('/the/login/path');
+        $entryPoint->setUseForward(true);
 
         $this->assertEquals($response, $entryPoint->start($request));
     }

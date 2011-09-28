@@ -29,25 +29,45 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * an authentication via a simple form composed of a username and a password.
  *
  * @author Fabien Potencier <fabien@symfony.com>
+ * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
 class UsernamePasswordFormAuthenticationListener extends AbstractAuthenticationListener
 {
     private $csrfProvider;
+    private $usernameParameter = '_username';
+    private $passwordParameter = '_password';
+    private $csrfParameter = '_csrf_token';
+    private $intention = 'authenticate';
+    private $postOnly = true;
 
-    /**
-     * {@inheritdoc}
-     */
-    public function __construct(SecurityContextInterface $securityContext, AuthenticationManagerInterface $authenticationManager, SessionAuthenticationStrategyInterface $sessionStrategy, HttpUtils $httpUtils, $providerKey, array $options = array(), AuthenticationSuccessHandlerInterface $successHandler = null, AuthenticationFailureHandlerInterface $failureHandler = null, LoggerInterface $logger = null, EventDispatcherInterface $dispatcher = null, CsrfProviderInterface $csrfProvider = null)
+    public function setCsrfProvider(CsrfProviderInterface $provider)
     {
-        parent::__construct($securityContext, $authenticationManager, $sessionStrategy, $httpUtils, $providerKey, array_merge(array(
-            'username_parameter' => '_username',
-            'password_parameter' => '_password',
-            'csrf_parameter'     => '_csrf_token',
-            'intention'          => 'authenticate',
-            'post_only'          => true,
-        ), $options), $successHandler, $failureHandler, $logger, $dispatcher);
+        $this->csrfProvider = $provider;
+    }
 
-        $this->csrfProvider = $csrfProvider;
+    public function setUsernameParameter($param)
+    {
+        $this->usernameParameter = $param;
+    }
+
+    public function setPasswordParameter($param)
+    {
+        $this->passwordParameter = $param;
+    }
+
+    public function setCsrfParameter($param)
+    {
+        $this->csrfParameter = $param;
+    }
+
+    public function setIntention($intention)
+    {
+        $this->intention = $intention;
+    }
+
+    public function setPostOnly($bool)
+    {
+        $this->postOnly = (Boolean) $bool;
     }
 
     /**
@@ -55,7 +75,7 @@ class UsernamePasswordFormAuthenticationListener extends AbstractAuthenticationL
      */
     protected function attemptAuthentication(Request $request)
     {
-        if ($this->options['post_only'] && 'post' !== strtolower($request->getMethod())) {
+        if ($this->postOnly && 'post' !== strtolower($request->getMethod())) {
             if (null !== $this->logger) {
                 $this->logger->debug(sprintf('Authentication method not supported: %s.', $request->getMethod()));
             }
@@ -64,15 +84,15 @@ class UsernamePasswordFormAuthenticationListener extends AbstractAuthenticationL
         }
 
         if (null !== $this->csrfProvider) {
-            $csrfToken = $request->get($this->options['csrf_parameter'], null, true);
+            $csrfToken = $request->get($this->csrfParameter, null, true);
 
-            if (false === $this->csrfProvider->isCsrfTokenValid($this->options['intention'], $csrfToken)) {
+            if (false === $this->csrfProvider->isCsrfTokenValid($this->intention, $csrfToken)) {
                 throw new InvalidCsrfTokenException('Invalid CSRF token.');
             }
         }
 
-        $username = trim($request->get($this->options['username_parameter'], null, true));
-        $password = $request->get($this->options['password_parameter'], null, true);
+        $username = trim($request->get($this->usernameParameter, null, true));
+        $password = $request->get($this->passwordParameter, null, true);
 
         $request->getSession()->set(SecurityContextInterface::LAST_USERNAME, $username);
 

@@ -63,6 +63,7 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
     private $successHandler;
     private $failureHandler;
     private $rememberMeServices;
+    private $checkPath = '/login_check';
 
     /**
      * Constructor.
@@ -79,7 +80,7 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
      * @param LoggerInterface                        $logger                A LoggerInterface instance
      * @param EventDispatcherInterface               $dispatcher            An EventDispatcherInterface instance
      */
-    public function __construct(SecurityContextInterface $securityContext, AuthenticationManagerInterface $authenticationManager, SessionAuthenticationStrategyInterface $sessionStrategy, HttpUtils $httpUtils, $providerKey, array $options = array(), AuthenticationSuccessHandlerInterface $successHandler = null, AuthenticationFailureHandlerInterface $failureHandler = null, LoggerInterface $logger = null, EventDispatcherInterface $dispatcher = null)
+    public function __construct(SecurityContextInterface $securityContext, AuthenticationManagerInterface $authenticationManager, SessionAuthenticationStrategyInterface $sessionStrategy, HttpUtils $httpUtils, $providerKey, AuthenticationSuccessHandlerInterface $successHandler, AuthenticationFailureHandlerInterface $failureHandler, LoggerInterface $logger = null, EventDispatcherInterface $dispatcher = null)
     {
         if (empty($providerKey)) {
             throw new \InvalidArgumentException('$providerKey must not be empty.');
@@ -91,16 +92,6 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
         $this->providerKey = $providerKey;
         $this->successHandler = $successHandler;
         $this->failureHandler = $failureHandler;
-        $this->options = array_merge(array(
-            'check_path'                     => '/login_check',
-            'login_path'                     => '/login',
-            'always_use_default_target_path' => false,
-            'default_target_path'            => '/',
-            'target_path_parameter'          => '_target_path',
-            'use_referer'                    => false,
-            'failure_path'                   => null,
-            'failure_forward'                => false,
-        ), $options);
         $this->logger = $logger;
         $this->dispatcher = $dispatcher;
         $this->httpUtils = $httpUtils;
@@ -114,6 +105,11 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
     public function setRememberMeServices(RememberMeServicesInterface $rememberMeServices)
     {
         $this->rememberMeServices = $rememberMeServices;
+    }
+
+    public function setCheckPath($path)
+    {
+        $this->checkPath = $path;
     }
 
     /**
@@ -156,14 +152,38 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
             if ($returnValue instanceof TokenInterface) {
                 $this->sessionStrategy->onAuthentication($request, $returnValue);
 
-                $response = $this->onSuccess($event, $request, $returnValue);
+                if (null !== $this->logger) {
+                    $this->logger->info(sprintf('User "%s" has been authenticated successfully', $returnValue));
+                }
+
+                $this->securityContext->setToken($returnValue);
+
+                $session = $request->getSession();
+                $session->remove(SecurityContextInterface::AUTHENTICATION_ERROR);
+                $session->remove(SecurityContextInterface::LAST_USERNAME);
+
+                if (null !== $this->dispatcher) {
+                    $loginEvent = new InteractiveLoginEvent($request, $returnValue);
+                    $this->dispatcher->dispatch(SecurityEvents::INTERACTIVE_LOGIN, $loginEvent);
+                }
+
+                $response = $this->successHandler->onAuthenticationSuccess($request, $returnValue);
+
+                if (null !== $this->rememberMeServices) {
+                    $this->rememberMeServices->loginSuccess($request, $response, $returnValue);
+                }
             } else if ($returnValue instanceof Response) {
                 $response = $returnValue;
             } else {
                 throw new \RuntimeException('attemptAuthentication() must either return a Response, an implementation of TokenInterface, or null.');
             }
         } catch (AuthenticationException $e) {
-            $response = $this->onFailure($event, $request, $e);
+            if (null !== $this->logger) {
+                $this->logger->info(sprintf('Authentication request failed: %s', $failed->getMessage()));
+            }
+
+            $this->securityContext->setToken(null);
+            $response = $this->failureHandler->onAuthenticationFailure($request, $failed);
         }
 
         $event->setResponse($response);
@@ -182,7 +202,7 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
      */
     protected function requiresAuthentication(Request $request)
     {
-        return $this->httpUtils->checkRequestPath($request, $this->options['check_path']);
+        return $this->httpUtils->checkRequestPath($request, $this->checkPath);
     }
 
     /**
@@ -195,101 +215,4 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
      * @throws AuthenticationException if the authentication fails
      */
     abstract protected function attemptAuthentication(Request $request);
-
-    private function onFailure(GetResponseEvent $event, Request $request, AuthenticationException $failed)
-    {
-        if (null !== $this->logger) {
-            $this->logger->info(sprintf('Authentication request failed: %s', $failed->getMessage()));
-        }
-
-        $this->securityContext->setToken(null);
-
-        if (null !== $this->failureHandler) {
-            return $this->failureHandler->onAuthenticationFailure($request, $failed);
-        }
-
-        if (null === $this->options['failure_path']) {
-            $this->options['failure_path'] = $this->options['login_path'];
-        }
-
-        if ($this->options['failure_forward']) {
-            if (null !== $this->logger) {
-                $this->logger->debug(sprintf('Forwarding to %s', $this->options['failure_path']));
-            }
-
-            $subRequest = $this->httpUtils->createRequest($request, $this->options['failure_path']);
-            $subRequest->attributes->set(SecurityContextInterface::AUTHENTICATION_ERROR, $failed);
-
-            return $event->getKernel()->handle($subRequest, HttpKernelInterface::SUB_REQUEST);
-        }
-
-        if (null !== $this->logger) {
-            $this->logger->debug(sprintf('Redirecting to %s', $this->options['failure_path']));
-        }
-
-        $request->getSession()->set(SecurityContextInterface::AUTHENTICATION_ERROR, $failed);
-
-        return $this->httpUtils->createRedirectResponse($request, $this->options['failure_path']);
-    }
-
-    private function onSuccess(GetResponseEvent $event, Request $request, TokenInterface $token)
-    {
-        if (null !== $this->logger) {
-            $this->logger->info(sprintf('User "%s" has been authenticated successfully', $token->getUsername()));
-        }
-
-        $this->securityContext->setToken($token);
-
-        $session = $request->getSession();
-        $session->remove(SecurityContextInterface::AUTHENTICATION_ERROR);
-        $session->remove(SecurityContextInterface::LAST_USERNAME);
-
-        if (null !== $this->dispatcher) {
-            $loginEvent = new InteractiveLoginEvent($request, $token);
-            $this->dispatcher->dispatch(SecurityEvents::INTERACTIVE_LOGIN, $loginEvent);
-        }
-
-        if (null !== $this->successHandler) {
-            $response = $this->successHandler->onAuthenticationSuccess($request, $token);
-        } else {
-            $response = $this->httpUtils->createRedirectResponse($request, $this->determineTargetUrl($request));
-        }
-
-        if (null !== $this->rememberMeServices) {
-            $this->rememberMeServices->loginSuccess($request, $response, $token);
-        }
-
-        return $response;
-    }
-
-    /**
-     * Builds the target URL according to the defined options.
-     *
-     * @param Request $request
-     *
-     * @return string
-     */
-    private function determineTargetUrl(Request $request)
-    {
-        if ($this->options['always_use_default_target_path']) {
-            return $this->options['default_target_path'];
-        }
-
-        if ($targetUrl = $request->get($this->options['target_path_parameter'], null, true)) {
-            return $targetUrl;
-        }
-
-        $session = $request->getSession();
-        if ($targetUrl = $session->get('_security.target_path')) {
-            $session->remove('_security.target_path');
-
-            return $targetUrl;
-        }
-
-        if ($this->options['use_referer'] && $targetUrl = $request->headers->get('Referer')) {
-            return $targetUrl;
-        }
-
-        return $this->options['default_target_path'];
-    }
 }

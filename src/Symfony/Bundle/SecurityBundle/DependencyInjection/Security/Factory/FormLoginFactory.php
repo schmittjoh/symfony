@@ -29,6 +29,7 @@ class FormLoginFactory extends AbstractFactory
         $this->addOption('username_parameter', '_username');
         $this->addOption('password_parameter', '_password');
         $this->addOption('csrf_parameter', '_csrf_token');
+        $this->addOption('use_forward', false);
         $this->addOption('intention', 'authenticate');
         $this->addOption('post_only', true);
     }
@@ -75,11 +76,26 @@ class FormLoginFactory extends AbstractFactory
     {
         $listenerId = parent::createListener($container, $id, $config, $userProvider);
 
+        $def = $container->getDefinition($listenerId);
+
+        if ($this->options['username_parameter'] !== $config['username_parameter']) {
+            $def->addMethodCall('setUsernameParameter', array($config['username_parameter']));
+        }
+        if ($this->options['password_parameter'] !== $config['password_parameter']) {
+            $def->addMethodCall('setPasswordParameter', array($config['password_parameter']));
+        }
+        if ($this->options['csrf_parameter'] !== $config['csrf_parameter']) {
+            $def->addMethodCall('setCsrfParameter', array($config['csrf_parameter']));
+        }
+        if ($this->options['intention'] !== $config['intention']) {
+            $def->addMethodCall('setIntention', array($config['intention']));
+        }
+        if ($this->options['post_only'] !== $config['post_only']) {
+            $def->addMethodCall('setPostOnly', array($config['post_only']));
+        }
+
         if (isset($config['csrf_provider'])) {
-            $container
-                ->getDefinition($listenerId)
-                ->addArgument(new Reference($config['csrf_provider']))
-            ;
+            $def->addMethodCall('setCsrfProvider', array(new Reference($config['csrf_provider'])));
         }
 
         return $listenerId;
@@ -88,12 +104,17 @@ class FormLoginFactory extends AbstractFactory
     protected function createEntryPoint($container, $id, $config, $defaultEntryPoint)
     {
         $entryPointId = 'security.authentication.form_entry_point.'.$id;
-        $container
+        $def = $container
             ->setDefinition($entryPointId, new DefinitionDecorator('security.authentication.form_entry_point'))
             ->addArgument(new Reference('security.http_utils'))
-            ->addArgument($config['login_path'])
-            ->addArgument($config['use_forward'])
         ;
+
+        if ($this->options['login_path'] !== $config['login_path']) {
+            $def->addMethodCall('setLoginPath', array($config['login_path']));
+        }
+        if ($this->options['use_forward'] !== $config['use_forward']) {
+            $def->addMethodCall('setUseForward', array($config['use_forward']));
+        }
 
         return $entryPointId;
     }

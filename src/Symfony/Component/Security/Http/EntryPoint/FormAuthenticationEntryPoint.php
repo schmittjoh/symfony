@@ -24,25 +24,31 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  */
 class FormAuthenticationEntryPoint implements AuthenticationEntryPointInterface
 {
-    private $loginPath;
-    private $useForward;
     private $httpKernel;
     private $httpUtils;
+    private $loginPath = '/login';
+    private $useForward = false;
 
     /**
      * Constructor
      *
      * @param HttpKernelInterface $kernel
      * @param HttpUtils           $httpUtils  An HttpUtils instance
-     * @param string              $loginPath  The path to the login form
-     * @param Boolean             $useForward Whether to forward or redirect to the login form
      */
-    public function __construct(HttpKernelInterface $kernel, HttpUtils $httpUtils, $loginPath, $useForward = false)
+    public function __construct(HttpKernelInterface $kernel, HttpUtils $httpUtils)
     {
         $this->httpKernel = $kernel;
         $this->httpUtils = $httpUtils;
-        $this->loginPath = $loginPath;
-        $this->useForward = (Boolean) $useForward;
+    }
+
+    public function setLoginPath($path)
+    {
+        $this->loginPath = $path;
+    }
+
+    public function setUseForward($bool)
+    {
+        $this->useForward = (Boolean) $bool;
     }
 
     /**
