@@ -206,7 +206,7 @@ class PhpDumper extends Dumper
             $processed->offsetSet($sDefinition);
 
             $class = $this->dumpValue($sDefinition->getClass());
-            if ($nbOccurrences->offsetGet($sDefinition) > 1 || count($sDefinition->getMethodCalls()) > 0 || $sDefinition->getProperties() || null !== $sDefinition->getConfigurator() || false !== strpos($class, '$')) {
+            if ($nbOccurrences->offsetGet($sDefinition) > 1 || count($sDefinition->getMethodCalls()) > 0 || $sDefinition->getProperties() || null !== $sDefinition->getConfigurator() || null !== $sDefinition->getInitMethod() || false !== strpos($class, '$')) {
                 $name = $this->getNextVariableName();
                 $variableMap->offsetSet($sDefinition, new Variable($name));
 
@@ -244,6 +244,7 @@ class PhpDumper extends Dumper
                     $code .= $this->addServiceMethodCalls(null, $sDefinition, $name);
                     $code .= $this->addServiceProperties(null, $sDefinition, $name);
                     $code .= $this->addServiceConfigurator(null, $sDefinition, $name);
+                    $code .= $this->addServiceInitMethod(null, $sDefinition, $name);
                 }
 
                 $code .= "\n";
@@ -345,7 +346,7 @@ class PhpDumper extends Dumper
                 continue;
             }
 
-            if ($sDefinition->getMethodCalls() || $sDefinition->getProperties() || $sDefinition->getConfigurator()) {
+            if ($sDefinition->getMethodCalls() || $sDefinition->getProperties() || $sDefinition->getConfigurator() || $sDefinition->getInitMethod()) {
                 return false;
             }
         }
@@ -987,6 +988,9 @@ EOF;
             }
             if (null !== $value->getConfigurator()) {
                 throw new \RuntimeException('Cannot dump definitions which have a configurator.');
+            }
+            if (null !== $value->getInitMethod()) {
+                throw new \RuntimeException('Cannot dump definitions which have an init method.');
             }
 
             $arguments = array();
