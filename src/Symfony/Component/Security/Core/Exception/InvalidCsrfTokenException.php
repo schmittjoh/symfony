@@ -18,7 +18,7 @@ namespace Symfony\Component\Security\Core\Exception;
  */
 class InvalidCsrfTokenException extends AuthenticationException
 {
-    public function getMessageTemplate()
+    public function getMessageKey()
     {
     	/** @Desc("The CSRF Token was invalid.") */
         return 'security.authentication_error.invalid_csrf_token';
