@@ -17,9 +17,10 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class DefaultAuthenticationFailureHandler implements AuthenticationFailureHandlerInterface
 {
-    private $kernel;
-    private $httpUtils;
-    private $logger;
+    protected $kernel;
+    protected $httpUtils;
+    protected $logger;
+
     private $failurePath;
     private $failureForward = false;
 

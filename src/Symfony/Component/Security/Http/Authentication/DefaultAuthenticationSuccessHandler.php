@@ -13,7 +13,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class DefaultAuthenticationSuccessHandler implements AuthenticationSuccessHandlerInterface
 {
-    private $httpUtils;
+    protected $httpUtils;
+
     private $targetPathParameter = '_target_path';
     private $alwaysUseDefaultTargetPath = false;
     private $defaultTargetPath = '/';
