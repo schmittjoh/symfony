@@ -16,6 +16,8 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### FrameworkBundle
 
+ * added kernel.event_subscriber tag
+ * added a way to create relative symlinks when running assets:install command (--relative option)
  * added Controller::getUser()
  * [BC BREAK] assets_base_urls and base_urls merging strategy has changed
  * changed the default profiler storage to use the filesystem instead of SQLite
@@ -28,6 +30,10 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 ### WebProfilerBundle
 
  * The toolbar position can now be configured via the `position` option (can be `top` or `bottom`)
+
+### Console
+
+ * added support for the shell even if readline is not available
 
 ### ClassLoader
 
@@ -62,6 +68,10 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * added a File-based profiler storage
  * added a MongoDB-based profiler storage
 
+### Routing
+
+ * added RouterInterface::getRouteCollection
+
 ### Translation
 
  * added support for more than one fallback locale
@@ -72,5 +82,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### Validator
 
+ * added a Size validator
+ * added a SizeLength validator
  * improved the ImageValidator with min width, max width, min height, and max height constraints
  * added support for MIME with wildcard in FileValidator
