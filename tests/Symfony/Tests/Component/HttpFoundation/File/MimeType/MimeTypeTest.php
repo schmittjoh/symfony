@@ -79,11 +79,15 @@ class MimeTypeTest extends \PHPUnit_Framework_TestCase
             $this->markTestSkipped('Can not verify chmod operations on Windows');
         }
 
+        if (in_array(get_current_user(), array('root'))) {
+            $this->markTestSkipped('This test will fail if run under superuser');
+        }
+
         $path = __DIR__.'/../Fixtures/to_delete';
         touch($path);
         chmod($path, 0333);
 
-        if (substr(sprintf('%o', fileperms($path)), -4) == '0333') {
+        if (get_current_user() != 'root' && substr(sprintf('%o', fileperms($path)), -4) == '0333') {
             $this->setExpectedException('Symfony\Component\HttpFoundation\File\Exception\AccessDeniedException');
             MimeTypeGuesser::getInstance()->guess($path);
         } else {

@@ -11,7 +11,7 @@
 
 namespace Symfony\Bridge\Doctrine\Validator\Constraints;
 
-use Symfony\Bridge\Doctrine\RegistryInterface;
+use Doctrine\Common\Persistence\ManagerRegistry;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 use Symfony\Component\Validator\Exception\ConstraintDefinitionException;
@@ -25,14 +25,14 @@ use Symfony\Component\Validator\ConstraintValidator;
 class UniqueEntityValidator extends ConstraintValidator
 {
     /**
-     * @var RegistryInterface
+     * @var ManagerRegistry
      */
     private $registry;
 
     /**
-     * @param RegistryInterface $registry
+     * @param ManagerRegistry $registry
      */
-    public function __construct(RegistryInterface $registry)
+    public function __construct(ManagerRegistry $registry)
     {
         $this->registry = $registry;
     }
@@ -55,9 +55,9 @@ class UniqueEntityValidator extends ConstraintValidator
         }
 
         if ($constraint->em) {
-            $em = $this->registry->getEntityManager($constraint->em);
+            $em = $this->registry->getManager($constraint->em);
         } else {
-            $em = $this->registry->getEntityManagerForClass(get_class($entity));
+            $em = $this->registry->getManagerForClass(get_class($entity));
         }
 
         $className = $this->context->getCurrentClass();
@@ -73,6 +73,17 @@ class UniqueEntityValidator extends ConstraintValidator
 
             if ($criteria[$fieldName] === null) {
                 return true;
+            } else if (isset($class->associationMappings[$fieldName])) {
+                $relatedClass = $em->getClassMetadata($class->associationMappings[$fieldName]['targetEntity']);
+                $relatedId = $relatedClass->getIdentifierValues($criteria[$fieldName]);
+
+                if (count($relatedId) > 1) {
+                    throw new ConstraintDefinitionException(
+                        "Associated entities are not allowed to have more than one identifier field to be " .
+                        "part of a unique constraint in: " . $class->name . "#" . $fieldName
+                    );
+                }
+                $criteria[$fieldName] = array_pop($relatedId);
             }
         }
 

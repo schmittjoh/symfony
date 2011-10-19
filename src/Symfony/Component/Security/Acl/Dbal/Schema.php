@@ -26,7 +26,6 @@ final class Schema extends BaseSchema
      * Constructor
      *
      * @param array $options the names for tables
-     * @return void
      */
     public function __construct(array $options)
     {
@@ -54,8 +53,6 @@ final class Schema extends BaseSchema
 
     /**
      * Adds the class table to the schema
-     *
-     * @return void
      */
     private function addClassTable()
     {
@@ -68,8 +65,6 @@ final class Schema extends BaseSchema
 
     /**
      * Adds the entry table to the schema
-     *
-     * @return void
      */
     private function addEntryTable()
     {
@@ -98,8 +93,6 @@ final class Schema extends BaseSchema
 
     /**
      * Adds the object identity table to the schema
-     *
-     * @return void
      */
     private function addObjectIdentitiesTable()
     {
@@ -120,8 +113,6 @@ final class Schema extends BaseSchema
 
     /**
      * Adds the object identity relation table to the schema
-     *
-     * @return void
      */
     private function addObjectIdentityAncestorsTable()
     {
@@ -139,8 +130,6 @@ final class Schema extends BaseSchema
 
     /**
      * Adds the security identity table to the schema
-     *
-     * @return void
      */
     private function addSecurityIdentitiesTable()
     {

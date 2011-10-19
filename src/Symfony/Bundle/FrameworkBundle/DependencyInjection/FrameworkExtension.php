@@ -65,6 +65,8 @@ class FrameworkExtension extends Extension
 
         $container->setParameter('kernel.trust_proxy_headers', $config['trust_proxy_headers']);
 
+        $container->setParameter('kernel.default_locale', $config['default_locale']);
+
         if (!empty($config['test'])) {
             $loader->load('test.xml');
         }
@@ -122,6 +124,7 @@ class FrameworkExtension extends Extension
 
             'Symfony\\Component\\HttpKernel\\HttpKernel',
             'Symfony\\Component\\HttpKernel\\EventListener\\ResponseListener',
+            'Symfony\\Component\\HttpKernel\\EventListener\\RouterListener',
             'Symfony\\Component\\HttpKernel\\Controller\\ControllerResolver',
             'Symfony\\Component\\HttpKernel\\Controller\\ControllerResolverInterface',
             'Symfony\\Component\\HttpKernel\\Event\\KernelEvent',
@@ -133,7 +136,6 @@ class FrameworkExtension extends Extension
             'Symfony\\Component\\HttpKernel\\KernelEvents',
             'Symfony\\Component\\HttpKernel\\Config\\FileLocator',
 
-            'Symfony\\Bundle\\FrameworkBundle\\EventListener\\RouterListener',
             'Symfony\\Bundle\\FrameworkBundle\\Controller\\ControllerNameParser',
             'Symfony\\Bundle\\FrameworkBundle\\Controller\\ControllerResolver',
             // Cannot be included because annotations will parse the big compiled class file
@@ -280,7 +282,6 @@ class FrameworkExtension extends Extension
 
         // session
         $container->getDefinition('session_listener')->addArgument($config['auto_start']);
-        $container->setParameter('session.default_locale', $config['default_locale']);
 
         // session storage
         $container->setAlias('session.storage', $config['storage_id']);

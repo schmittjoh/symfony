@@ -81,7 +81,7 @@ class FileProfilerStorage implements ProfilerStorageInterface
                 'ip'     => $csvIp,
                 'url'    => $csvUrl,
                 'time'   => $csvTime,
-                'parent' => $csvParent
+                'parent' => $csvParent,
             );
 
             $result[] = $row;
@@ -116,13 +116,11 @@ class FileProfilerStorage implements ProfilerStorageInterface
      */
     public function read($token)
     {
-        $file = $this->getFilename($token);
-
-        if (!file_exists($file)) {
+        if (!$token || !file_exists($file = $this->getFilename($token))) {
             return null;
         }
 
-        return unserialize(file_get_contents($file));
+        return $this->createProfileFromData($token, unserialize(file_get_contents($file)));
     }
 
     /**
@@ -140,7 +138,16 @@ class FileProfilerStorage implements ProfilerStorageInterface
         }
 
         // Store profile
-        file_put_contents($file, serialize($profile));
+        $data = array(
+            'token'    => $profile->getToken(),
+            'parent'   => $profile->getParent() ? $profile->getParent()->getToken() : null,
+            'children' => array_map(function ($p) { return $p->getToken(); }, $profile->getChildren()),
+            'data'     => $profile->getCollectors(),
+            'ip'       => $profile->getIp(),
+            'url'      => $profile->getUrl(),
+            'time'     => $profile->getTime(),
+        );
+        file_put_contents($file, serialize($data));
 
         // Add to index
         $file = fopen($this->getIndexFilename(), 'a');
@@ -149,11 +156,11 @@ class FileProfilerStorage implements ProfilerStorageInterface
             $profile->getIp(),
             $profile->getUrl(),
             $profile->getTime(),
-            $profile->getParent() ? $profile->getParent()->getToken() : null
+            $profile->getParent() ? $profile->getParent()->getToken() : null,
         ));
         fclose($file);
 
-        return ! $exists;
+        return !$exists;
     }
 
     /**
@@ -177,7 +184,7 @@ class FileProfilerStorage implements ProfilerStorageInterface
      */
     protected function getIndexFilename()
     {
-        return $this->folder.'/'.'index.csv';
+        return $this->folder.'/index.csv';
     }
 
     /**
@@ -218,6 +225,33 @@ class FileProfilerStorage implements ProfilerStorageInterface
             fseek($file, -2, SEEK_CUR);
         }
 
-        return $str === "" ? $this->readLineFromFile($file) : $str;
+        return $str === '' ? $this->readLineFromFile($file) : $str;
+    }
+
+    protected function createProfileFromData($token, $data, $parent = null)
+    {
+        $profile = new Profile($token);
+        $profile->setIp($data['ip']);
+        $profile->setUrl($data['url']);
+        $profile->setTime($data['time']);
+        $profile->setCollectors($data['data']);
+
+        if (!$parent && $data['parent']) {
+            $parent = $this->read($data['parent']);
+        }
+
+        if ($parent) {
+            $profile->setParent($parent);
+        }
+
+        foreach ($data['children'] as $token) {
+            if (!$token || !file_exists($file = $this->getFilename($token))) {
+                continue;
+            }
+
+            $profile->addChild($this->createProfileFromData($token, unserialize(file_get_contents($file)), $profile));
+        }
+
+        return $profile;
     }
 }

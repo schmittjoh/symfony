@@ -32,6 +32,7 @@ class Profile implements \Serializable
     {
         $this->token = $token;
         $this->collectors = array();
+        $this->children = array();
     }
 
     /**
@@ -140,6 +141,7 @@ class Profile implements \Serializable
     public function addChild(Profile $child)
     {
         $this->children[] = $child;
+        $child->setParent($this);
     }
 
     public function getCollector($name)

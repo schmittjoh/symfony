@@ -10,6 +10,11 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 2.1.0
 -----
 
+### DoctrineBrige
+
+ * added a default implementation of the ManagerRegistry
+ * added a session storage for Doctrine DBAL
+
 ### DoctrineBundle
 
  * The `em` option for the `UniqueEntity` constraint is now optional (and should probably not be used anymore).
@@ -50,11 +55,14 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### Form
 
+ * made the translation catalogue configurable via the "translation_domain" option
  * added Form::getErrorsAsString() to help debugging forms
  * allowed setting different options for RepeatedType fields (like the label)
 
 ### HttpFoundation
 
+ * made Response::prepare() method the place to enforce HTTP specification
+ * [BC BREAK] moved management of the locale from the Session class to the Request class
  * added a generic access to the PHP built-in filter mechanism: ParameterBag::filter()
  * made FileBinaryMimeTypeGuesser command configurable
  * added Request::getUser() and Request::getPassword()
@@ -65,6 +73,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### HttpKernel
 
+ * improved extensibility between bundles
  * added a File-based profiler storage
  * added a MongoDB-based profiler storage
 

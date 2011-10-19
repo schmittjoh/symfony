@@ -101,7 +101,6 @@ abstract class AbstractDoctrineExtension extends Extension
      *
      * @param array $mappingConfig
      * @param string $mappingName
-     * @return void
      */
     protected function setMappingDriverAlias($mappingConfig, $mappingName)
     {
@@ -117,7 +116,6 @@ abstract class AbstractDoctrineExtension extends Extension
      *
      * @param array  $mappingConfig
      * @param string $mappingName
-     * @return void
      */
     protected function setMappingDriverConfig(array $mappingConfig, $mappingName)
     {
@@ -208,7 +206,7 @@ abstract class AbstractDoctrineExtension extends Extension
             }
             $mappingDriverDef->setPublic(false);
             if (false !== strpos($mappingDriverDef->getClass(), 'yml') || false !== strpos($mappingDriverDef->getClass(), 'xml')) {
-                $mappingDriverDef->addMethodCall('setNamespacePrefixes', array(array_flip($driverPaths)));
+                $mappingDriverDef->setArguments(array(array_flip($driverPaths)));
                 $mappingDriverDef->addMethodCall('setGlobalBasename', array('mapping'));
             }
 

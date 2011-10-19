@@ -5,10 +5,10 @@
     xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <parameters>
-        <parameter key="router_listener.class">Symfony\Bundle\FrameworkBundle\EventListener\RouterListener</parameter>
         <parameter key="controller_resolver.class">Symfony\Bundle\FrameworkBundle\Controller\ControllerResolver</parameter>
         <parameter key="controller_name_converter.class">Symfony\Bundle\FrameworkBundle\Controller\ControllerNameParser</parameter>
         <parameter key="response_listener.class">Symfony\Component\HttpKernel\EventListener\ResponseListener</parameter>
+        <parameter key="locale_listener.class">Symfony\Component\HttpKernel\EventListener\LocaleListener</parameter>
     </parameters>
 
     <services>
@@ -25,8 +25,14 @@
         </service>
 
         <service id="response_listener" class="%response_listener.class%">
-            <tag name="kernel.event_listener" event="kernel.response" method="onKernelResponse" />
+            <tag name="kernel.event_subscriber" />
             <argument>%kernel.charset%</argument>
+        </service>
+
+        <service id="locale_listener" class="%locale_listener.class%">
+            <tag name="kernel.event_subscriber" />
+            <argument>%kernel.default_locale%</argument>
+            <argument type="service" id="router" on-invalid="ignore" />
         </service>
     </services>
 </container>
