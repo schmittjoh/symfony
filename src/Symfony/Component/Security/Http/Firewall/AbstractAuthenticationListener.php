@@ -50,7 +50,6 @@ use Symfony\Component\Security\Http\HttpUtils;
  */
 abstract class AbstractAuthenticationListener implements ListenerInterface
 {
-    protected $options;
     protected $logger;
     protected $authenticationManager;
     protected $providerKey;
@@ -73,7 +72,6 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
      * @param SessionAuthenticationStrategyInterface $sessionStrategy
      * @param HttpUtils                              $httpUtils             An HttpUtilsInterface instance
      * @param string                                 $providerKey
-     * @param array                                  $options               An array of options for the processing of a
      *                                                                      successful, or failed authentication attempt
      * @param AuthenticationSuccessHandlerInterface  $successHandler
      * @param AuthenticationFailureHandlerInterface  $failureHandler
