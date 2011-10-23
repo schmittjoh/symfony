@@ -41,10 +41,6 @@ class LocaleListener implements EventSubscriberInterface
         } else {
             $request->setDefaultLocale($this->defaultLocale);
         }
-
-        if (null !== $this->router) {
-            $this->router->getContext()->setParameter('_locale', $request->getLocale());
-        }
     }
 
     public function onKernelRequest(GetResponseEvent $event)
@@ -70,7 +66,7 @@ class LocaleListener implements EventSubscriberInterface
     static public function getSubscribedEvents()
     {
         return array(
-            KernelEvents::REQUEST => array(array('onEarlyKernelRequest', 256), array('onKernelRequest', -1)),
+            KernelEvents::REQUEST => array(array('onEarlyKernelRequest', 255), array('onKernelRequest', -1)),
         );
     }
 }
