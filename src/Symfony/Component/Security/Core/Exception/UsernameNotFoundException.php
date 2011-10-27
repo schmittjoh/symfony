@@ -18,9 +18,23 @@ namespace Symfony\Component\Security\Core\Exception;
  */
 class UsernameNotFoundException extends AuthenticationException
 {
+    private $username;
+
+    public function __construct($username, $code = 0, \Exception $previous = null)
+    {
+        parent::__construct(sprintf('The username "%s" was not found.', $username), $code, $previous);
+
+        $this->username = $username;
+    }
+
     public function getMessageKey()
     {
-    	/** @Desc("This username was not found.") */
+    	/** @Desc("The username '%username%' was not found.") */
         return 'security.authentication_error.username_not_found';
+    }
+
+    public function getMessageParameters()
+    {
+        return array('%username%' => $this->username);
     }
 }
