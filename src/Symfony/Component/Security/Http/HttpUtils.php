@@ -127,10 +127,16 @@ class HttpUtils
         try {
             $parameters = $this->router->match($request->getPathInfo());
 
-            $context->setParameter('_locale', isset($parameters['_locale']) ? $parameters['_locale'] : $request->getLocale());
+            if (isset($parameters['_locale'])) {
+                $context->setParameter('_locale', $parameters['_locale']);
+
+                return;
+            }
         } catch (\Exception $e) {
             // let's hope user doesn't use the locale in the path
         }
+
+        $context->setParameter('_locale', $request->getLocale());
     }
 
     private function generateUrl($route, $absolute = false)
