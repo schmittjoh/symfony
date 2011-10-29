@@ -11,6 +11,8 @@
 
 namespace Symfony\Bundle\SecurityBundle\DependencyInjection;
 
+use Symfony\Component\Security\Core\Authorization\Expression\Expression;
+
 use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
@@ -90,6 +92,20 @@ class SecurityExtension extends Extension
             $this->aclLoad($config['acl'], $container);
         }
 
+        if (isset($config['expressions'])) {
+            $loader->load('security_expressions.xml');
+            $this->configureExpressions($config, $container);
+        }
+
+        // voters
+        if (!isset($config['voters']) || !$config['voters']['role']) {
+            $container->removeDefinition('security.access.role_hierarchy_voter');
+            $container->removeDefinition('security.access.simple_role_voter');
+        }
+        if (!isset($config['voters']) || !$config['voters']['authenticated']) {
+            $container->removeDefinition('security.access.authenticated_voter');
+        }
+
         // add some required classes for compilation
         $this->addClassesToCompile(array(
             'Symfony\\Component\\Security\\Http\\Firewall',
@@ -119,7 +135,13 @@ class SecurityExtension extends Extension
         if (isset($config['cache']['id'])) {
             $container->setAlias('security.acl.cache', $config['cache']['id']);
         }
-        $container->getDefinition('security.acl.voter.basic_permissions')->addArgument($config['voter']['allow_if_object_identity_unavailable']);
+
+        if (isset($config['voter'])) {
+            $container->getDefinition('security.acl.voter.basic_permissions')
+                ->addArgument($config['voter']['allow_if_object_identity_unavailable']);
+        } else {
+            $container->removeDefinition('security.acl.voter.basic_permissions');
+        }
 
         // custom ACL provider
         if (isset($config['provider'])) {
@@ -129,6 +151,37 @@ class SecurityExtension extends Extension
         }
 
         $this->configureDbalAclProvider($config, $container, $loader);
+    }
+
+    private function configureExpressions($config, ContainerBuilder $container)
+    {
+        if (isset($config['expressions']['cache_dir'])) {
+            $cacheDir = $container->getParameterBag()->resolveValue($config['expressions']['cache_dir']);
+            if (!is_dir($cacheDir)) {
+                if (false === @mkdir($cacheDir, 0777, true)) {
+                    throw new  \RuntimeException(sprintf('Could not create cache directory "%s".', $cacheDir));
+                }
+            }
+
+            if (!is_writable($cacheDir)) {
+                throw new \RuntimeException(sprintf('The cache directory "%s" is not writable.', $cacheDir));
+            }
+
+            $container
+                ->getDefinition('security.expressions.voter')
+                ->addMethodCall('setCacheDir', array($cacheDir))
+            ;
+        }
+
+        if (isset($config['role_hierarchy'])) {
+            $container
+                ->getDefinition('security.expressions.variable_compiler')
+                ->addTag('security.expressions.variable', array(
+                    'variable' => 'role_hierarchy',
+                    'service'  => 'security.role_hierarchy',
+                ))
+            ;
+        }
     }
 
     private function configureDbalAclProvider(array $config, ContainerBuilder $container, $loader)
@@ -167,6 +220,7 @@ class SecurityExtension extends Extension
     {
         if (!isset($config['role_hierarchy'])) {
             $container->removeDefinition('security.access.role_hierarchy_voter');
+            $container->removeDefinition('security.role_hierarchy');
 
             return;
         }
@@ -194,8 +248,18 @@ class SecurityExtension extends Extension
                 $access['ip']
             );
 
+            if (isset($access['roles'])) {
+                $attributes = $access['roles'];
+            } else {
+                $def = new DefinitionDecorator('security.expressions.expression');
+                $def->addArgument($access['access']);
+                $container->set($exprId = 'security.expressions.expression.'.sha1($access['access']), $def);
+
+                $attributes = array(new Reference($exprId));
+            }
+
             $container->getDefinition('security.access_map')
-                      ->addMethodCall('add', array($matcher, $access['roles'], $access['requires_channel']));
+                      ->addMethodCall('add', array($matcher, $attributes, $access['requires_channel']));
         }
     }
 

@@ -53,6 +53,19 @@ class MainConfiguration implements ConfigurationInterface
         $rootNode = $tb->root('security');
 
         $rootNode
+            ->validate()
+                ->always(function($v) {
+                    if (!isset($v['expressions']) && isset($v['access_control'])) {
+                        foreach ($v['access_control'] as $access) {
+                            if (isset($access['access'])) {
+                                throw new \Exception('You must enable "expressions" if you use them in the "access_control" section.');
+                            }
+                        }
+                    }
+
+                    return $v;
+                })
+            ->end()
             ->children()
                 ->scalarNode('access_denied_url')->defaultNull()->end()
                 ->scalarNode('session_fixation_strategy')->cannotBeEmpty()->defaultValue('migrate')->end()
@@ -81,8 +94,40 @@ class MainConfiguration implements ConfigurationInterface
         $this->addAccessControlSection($rootNode);
         $this->addRoleHierarchySection($rootNode);
         $this->addUtilSection($rootNode);
+        $this->addExpressionsSection($rootNode);
+        $this->addVotersSection($rootNode);
 
         return $tb;
+    }
+
+    private function addVotersSection(ArrayNodeDefinition $rootNode)
+    {
+        $rootNode
+            ->children()
+                ->arrayNode('voters')
+                    ->addDefaultsIfNotSet()
+                    ->canBeUnset()
+                    ->children()
+                        ->booleanNode('authenticated')->defaultTrue()->end()
+                        ->booleanNode('role')->defaultTrue()->end()
+                    ->end()
+                ->end()
+            ->end()
+        ;
+    }
+
+    private function addExpressionsSection(ArrayNodeDefinition $rootNode)
+    {
+        $rootNode
+            ->children()
+                ->arrayNode('expressions')
+                    ->canBeUnset()
+                    ->children()
+                        ->scalarNode('cache_dir')->defaultValue('%kernel.cache_dir%/security_expr')->end()
+                    ->end()
+                ->end()
+            ->end()
+        ;
     }
 
     private function addAclSection(ArrayNodeDefinition $rootNode)
@@ -111,6 +156,7 @@ class MainConfiguration implements ConfigurationInterface
                             ->end()
                         ->end()
                         ->arrayNode('voter')
+                            ->canBeUnset()
                             ->addDefaultsIfNotSet()
                             ->children()
                                 ->booleanNode('allow_if_object_identity_unavailable')->defaultTrue()->end()
@@ -151,6 +197,16 @@ class MainConfiguration implements ConfigurationInterface
                 ->arrayNode('access_control')
                     ->cannotBeOverwritten()
                     ->prototype('array')
+                        ->fixXmlConfig('role')
+                        ->validate()
+                            ->always(function($v) {
+                                if (isset($v['roles']) && isset($v['access'])) {
+                                    throw new \Exception('"roles", and "access" cannot be set at the same time.');
+                                }
+
+                                return $v;
+                            })
+                        ->end()
                         ->children()
                             ->scalarNode('requires_channel')->defaultNull()->end()
                             ->scalarNode('path')->defaultNull()->end()
@@ -160,13 +216,11 @@ class MainConfiguration implements ConfigurationInterface
                                 ->beforeNormalization()->ifString()->then(function($v) { return preg_split('/\s*,\s*/', $v); })->end()
                                 ->prototype('scalar')->end()
                             ->end()
-                        ->end()
-                        ->fixXmlConfig('role')
-                        ->children()
                             ->arrayNode('roles')
                                 ->beforeNormalization()->ifString()->then(function($v) { return preg_split('/\s*,\s*/', $v); })->end()
                                 ->prototype('scalar')->end()
                             ->end()
+                            ->scalarNode('access')->end()
                         ->end()
                     ->end()
                 ->end()
