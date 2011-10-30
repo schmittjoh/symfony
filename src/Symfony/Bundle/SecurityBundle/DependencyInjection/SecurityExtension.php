@@ -253,7 +253,7 @@ class SecurityExtension extends Extension
             } else {
                 $def = new DefinitionDecorator('security.expressions.expression');
                 $def->addArgument($access['access']);
-                $container->set($exprId = 'security.expressions.expression.'.sha1($access['access']), $def);
+                $container->setDefinition($exprId = 'security.expressions.expression.'.sha1($access['access']), $def);
 
                 $attributes = array(new Reference($exprId));
             }

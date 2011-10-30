@@ -200,8 +200,12 @@ class MainConfiguration implements ConfigurationInterface
                         ->fixXmlConfig('role')
                         ->validate()
                             ->always(function($v) {
-                                if (isset($v['roles']) && isset($v['access'])) {
+                                if (!empty($v['roles']) && isset($v['access'])) {
                                     throw new \Exception('"roles", and "access" cannot be set at the same time.');
+                                }
+
+                                if (empty($v['roles'])) {
+                                    unset($v['roles']);
                                 }
 
                                 return $v;
