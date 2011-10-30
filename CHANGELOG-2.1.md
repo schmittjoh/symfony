@@ -21,6 +21,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### FrameworkBundle
 
+ * added a router:match command
  * added kernel.event_subscriber tag
  * added a way to create relative symlinks when running assets:install command (--relative option)
  * added Controller::getUser()
@@ -32,13 +33,20 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
  * added a validator for the user password
 
+### SwiftmailerBundle
+
+ * moved the data collector to the bridge
+ * replaced MessageLogger class with the one from Swiftmailer 4.1.3
+
 ### WebProfilerBundle
 
+ * added a routing panel
  * added a timeline panel
  * The toolbar position can now be configured via the `position` option (can be `top` or `bottom`)
 
 ### Console
 
+ * made the defaults (helper set, commands, input definition) in Application more easily customizable
  * added support for the shell even if readline is not available
 
 ### ClassLoader
@@ -82,6 +90,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### Routing
 
+ * added a TraceableUrlMatcher
  * added the possibility to define default values and requirements for placeholders in prefix
  * added RouterInterface::getRouteCollection
 

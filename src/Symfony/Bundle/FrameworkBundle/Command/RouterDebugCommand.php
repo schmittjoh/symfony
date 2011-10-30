@@ -15,6 +15,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Console\Output\Output;
 
 /**
  * A console command for retrieving information about routes
@@ -35,6 +36,7 @@ class RouterDebugCommand extends ContainerAwareCommand
         if (!$router instanceof RouterInterface) {
             return false;
         }
+
         return parent::isEnabled();
     }
 
