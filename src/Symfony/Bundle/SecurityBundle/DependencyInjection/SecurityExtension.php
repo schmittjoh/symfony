@@ -11,8 +11,7 @@
 
 namespace Symfony\Bundle\SecurityBundle\DependencyInjection;
 
-use Symfony\Component\Security\Core\Authorization\Expression\Expression;
-
+use JMS\SecurityExtraBundle\Security\Authorization\Expression\Expression;
 use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
@@ -92,20 +91,6 @@ class SecurityExtension extends Extension
             $this->aclLoad($config['acl'], $container);
         }
 
-        if (isset($config['expressions'])) {
-            $loader->load('security_expressions.xml');
-            $this->configureExpressions($config, $container);
-        }
-
-        // voters
-        if (!isset($config['voters']) || !$config['voters']['role']) {
-            $container->removeDefinition('security.access.role_hierarchy_voter');
-            $container->removeDefinition('security.access.simple_role_voter');
-        }
-        if (!isset($config['voters']) || !$config['voters']['authenticated']) {
-            $container->removeDefinition('security.access.authenticated_voter');
-        }
-
         // add some required classes for compilation
         $this->addClassesToCompile(array(
             'Symfony\\Component\\Security\\Http\\Firewall',
@@ -136,12 +121,8 @@ class SecurityExtension extends Extension
             $container->setAlias('security.acl.cache', $config['cache']['id']);
         }
 
-        if (isset($config['voter'])) {
-            $container->getDefinition('security.acl.voter.basic_permissions')
-                ->addArgument($config['voter']['allow_if_object_identity_unavailable']);
-        } else {
-            $container->removeDefinition('security.acl.voter.basic_permissions');
-        }
+        $container->getDefinition('security.acl.voter.basic_permissions')
+            ->addArgument($config['voter']['allow_if_object_identity_unavailable']);
 
         // custom ACL provider
         if (isset($config['provider'])) {

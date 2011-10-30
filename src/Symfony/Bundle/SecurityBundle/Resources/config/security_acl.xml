@@ -7,9 +7,6 @@
     <parameters>
         <parameter key="security.acl.permission_granting_strategy.class">Symfony\Component\Security\Acl\Domain\PermissionGrantingStrategy</parameter>
 
-        <parameter key="security.acl.permission_evaluator.class">Symfony\Component\Security\Acl\Expression\PermissionEvaluator</parameter>
-        <parameter key="security.acl.has_permission_compiler.class">Symfony\Component\Security\Acl\Expression\HasPermissionFunctionCompiler</parameter>
-        
         <parameter key="security.acl.voter.class">Symfony\Component\Security\Acl\Voter\AclVoter</parameter>
         <parameter key="security.acl.permission.map.class">Symfony\Component\Security\Acl\Permission\BasicPermissionMap</parameter>
 
@@ -45,21 +42,6 @@
             <argument type="service" id="security.acl.permission.map" />
             <argument type="service" id="logger" on-invalid="null" />
             <tag name="security.voter" priority="255" />
-        </service>
-        
-        <!-- Expression-Based ACL -->
-        <service id="security.acl.permission_evaluator" class="%security.acl.permission_evaluator.class%" public="false">
-            <tag name="monolog.logger" channel="security" />
-            <argument type="service" id="security.acl.provider" />
-            <argument type="service" id="security.acl.object_identity_retrieval_strategy" />
-            <argument type="service" id="security.acl.security_identity_retrieval_strategy" />
-            <argument type="service" id="security.acl.permission.map" />
-            <argument type="service" id="logger" on-invalid="null" />
-        </service>
-                
-        <service id="security.acl.has_permission_compiler" class="%security.acl.has_permission_compiler.class%" public="false">
-            <tag name="security.expressions.function_compiler" />
-            <tag name="security.expressions.variable" variable="permission_evaluator" service="security.acl.permission_evaluator"/>
         </service>
     </services>
 </container>
