@@ -15,8 +15,13 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * added a default implementation of the ManagerRegistry
  * added a session storage for Doctrine DBAL
 
+### AbstractDoctrineBundle
+
+ * This bundle has been removed and the relevant code has been moved to the Doctrine bridge
+
 ### DoctrineBundle
 
+ * added optional `group_by` property to `EntityType` that supports either a `PropertyPath` or a `\Closure` that is evaluated on the entity choices
  * The `em` option for the `UniqueEntity` constraint is now optional (and should probably not be used anymore).
 
 ### FrameworkBundle
@@ -38,11 +43,19 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * moved the data collector to the bridge
  * replaced MessageLogger class with the one from Swiftmailer 4.1.3
 
+### TwigBundle
+
+ * added the real template name when an error occurs in a Twig template
+
 ### WebProfilerBundle
 
  * added a routing panel
  * added a timeline panel
  * The toolbar position can now be configured via the `position` option (can be `top` or `bottom`)
+
+### Config
+
+ * implemented `Serializable` on resources
 
 ### Console
 
@@ -64,6 +77,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### Form
 
+ * added support for validation groups as callbacks
  * made the translation catalogue configurable via the "translation_domain" option
  * added Form::getErrorsAsString() to help debugging forms
  * allowed setting different options for RepeatedType fields (like the label)
@@ -88,14 +102,23 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * added a File-based profiler storage
  * added a MongoDB-based profiler storage
 
+### Locale
+
+ * added Locale::getIcuVersion() and Locale::getIcuDataVersion()
+
 ### Routing
 
  * added a TraceableUrlMatcher
  * added the possibility to define default values and requirements for placeholders in prefix
  * added RouterInterface::getRouteCollection
 
+### Security
+
+ * added a way to remove a token from a session
+
 ### Translation
 
+ * added support for gettext
  * added support for more than one fallback locale
  * added support for translations in ResourceBundles
  * added support for extracting translation messages from templates (Twig and PHP)
@@ -104,7 +127,12 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### Validator
 
+ * added support for `ctype_*` assertions in `TypeValidator`
  * added a Size validator
  * added a SizeLength validator
  * improved the ImageValidator with min width, max width, min height, and max height constraints
  * added support for MIME with wildcard in FileValidator
+
+### Yaml
+
+ * Yaml::parse() does not evaluate loaded files as PHP files by default anymore (call Yaml::enablePhpParsing() to get back the old behavior)
