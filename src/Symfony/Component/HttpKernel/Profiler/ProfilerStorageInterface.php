@@ -21,13 +21,14 @@ interface ProfilerStorageInterface
     /**
      * Finds profiler tokens for the given criteria.
      *
-     * @param string $ip    The IP
-     * @param string $url   The URL
-     * @param string $limit The maximum number of tokens to return
+     * @param string $ip     The IP
+     * @param string $url    The URL
+     * @param string $limit  The maximum number of tokens to return
+     * @param string $method The request method
      *
      * @return array An array of tokens
      */
-    function find($ip, $url, $limit);
+    function find($ip, $url, $limit, $method);
 
     /**
      * Reads data associated with the given token.
@@ -41,7 +42,7 @@ interface ProfilerStorageInterface
     function read($token);
 
     /**
-     * Write data associated with the given token.
+     * Saves a Profile.
      *
      * @param Profile $profile A Profile instance
      *

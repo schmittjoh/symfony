@@ -151,17 +151,20 @@ class ContainerAwareEventDispatcherTest extends \PHPUnit_Framework_TestCase
 
         $service = $this->getMock('Symfony\Bundle\FrameworkBundle\Tests\Service');
 
-        $service
-            ->expects($this->once())
-            ->method('onEvent')
-            ->with($event)
-        ;
-
         $container = new Container();
         $container->set('service.listener', $service);
 
         $dispatcher = new ContainerAwareEventDispatcher($container);
         $dispatcher->addListenerService('onEvent', array('service.listener', 'onEvent'));
+
+        $event->setDispatcher($dispatcher);
+        $event->setName('onEvent');
+
+        $service
+            ->expects($this->once())
+            ->method('onEvent')
+            ->with($event)
+        ;
 
         $this->assertTrue($dispatcher->hasListeners());
 
@@ -186,7 +189,7 @@ class ContainerAwareEventDispatcherTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue(isset($listeners['onEvent']));
 
-        $this->assertEquals(1, count($dispatcher->getListeners('onEvent')));
+        $this->assertCount(1, $dispatcher->getListeners('onEvent'));
     }
 }
 

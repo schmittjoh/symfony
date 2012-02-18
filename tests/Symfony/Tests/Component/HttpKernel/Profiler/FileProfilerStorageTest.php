@@ -25,8 +25,7 @@ class FileProfilerStorageTest extends \PHPUnit_Framework_TestCase
         $iterator = new \RecursiveDirectoryIterator(self::$tmpDir, $flags);
         $iterator = new \RecursiveIteratorIterator($iterator, \RecursiveIteratorIterator::SELF_FIRST);
 
-        foreach ($iterator as $file)
-        {
+        foreach ($iterator as $file) {
             if (is_file($file)) {
                 unlink($file);
             }
@@ -58,11 +57,11 @@ class FileProfilerStorageTest extends \PHPUnit_Framework_TestCase
             $profile = new Profile('token_'.$i);
             $profile->setIp('127.0.0.1');
             $profile->setUrl('http://foo.bar');
+            $profile->setMethod('GET');
             self::$storage->write($profile);
         }
-        $this->assertEquals(count(self::$storage->find('127.0.0.1', 'http://foo.bar', 20)), 10, '->write() stores data in the database');
+        $this->assertCount(10, self::$storage->find('127.0.0.1', 'http://foo.bar', 20, 'GET'), '->write() stores data in the database');
     }
-
 
     public function testChildren()
     {
@@ -85,11 +84,11 @@ class FileProfilerStorageTest extends \PHPUnit_Framework_TestCase
 
         // Check child has link to parent
         $this->assertNotNull($childProfile->getParent());
-        $this->assertEquals($parentProfile->getToken(), $childProfile->getParent()->getToken());
+        $this->assertEquals($parentProfile->getToken(), $childProfile->getParentToken());
 
         // Check parent has child
         $children = $parentProfile->getChildren();
-        $this->assertEquals(1, count($children));
+        $this->assertCount(1, $children);
         $this->assertEquals($childProfile->getToken(), $children[0]->getToken());
     }
 
@@ -122,20 +121,23 @@ class FileProfilerStorageTest extends \PHPUnit_Framework_TestCase
     {
         $profile = new Profile('token');
 
-        $this->assertTrue(true === self::$storage->write($profile), '->write() returns true when the token is unique');
-        $this->assertTrue(true === self::$storage->write($profile), '->write() overwrites when the token is already present in the DB');
+        $this->assertTrue(self::$storage->write($profile), '->write() returns true when the token is unique');
+        $this->assertTrue(self::$storage->write($profile), '->write() overwrites when the token is already present in the DB');
+
+        $this->assertCount(1, self::$storage->find('', '', 1000, ''), '->find() does not return the same profile twice');
     }
 
     public function testRetrieveByIp()
     {
         $profile = new Profile('token');
         $profile->setIp('127.0.0.1');
+        $profile->setMethod('GET');
 
         self::$storage->write($profile);
 
-        $this->assertEquals(count(self::$storage->find('127.0.0.1', '', 10)), 1, '->find() retrieve a record by IP');
-        $this->assertEquals(count(self::$storage->find('127.0.%.1', '', 10)), 0, '->find() does not interpret a "%" as a wildcard in the IP');
-        $this->assertEquals(count(self::$storage->find('127.0._.1', '', 10)), 0, '->find() does not interpret a "_" as a wildcard in the IP');
+        $this->assertCount(1, self::$storage->find('127.0.0.1', '', 10, 'GET'), '->find() retrieve a record by IP');
+        $this->assertCount(0, self::$storage->find('127.0.%.1', '', 10, 'GET'), '->find() does not interpret a "%" as a wildcard in the IP');
+        $this->assertCount(0, self::$storage->find('127.0._.1', '', 10, 'GET'), '->find() does not interpret a "_" as a wildcard in the IP');
     }
 
     public function testRetrieveByUrl()
@@ -143,38 +145,44 @@ class FileProfilerStorageTest extends \PHPUnit_Framework_TestCase
         $profile = new Profile('simple_quote');
         $profile->setIp('127.0.0.1');
         $profile->setUrl('http://foo.bar/\'');
+        $profile->setMethod('GET');
         self::$storage->write($profile);
 
         $profile = new Profile('double_quote');
         $profile->setIp('127.0.0.1');
         $profile->setUrl('http://foo.bar/"');
+        $profile->setMethod('GET');
         self::$storage->write($profile);
 
         $profile = new Profile('backslash');
         $profile->setIp('127.0.0.1');
         $profile->setUrl('http://foo\\bar/');
+        $profile->setMethod('GET');
         self::$storage->write($profile);
 
         $profile = new Profile('percent');
         $profile->setIp('127.0.0.1');
         $profile->setUrl('http://foo.bar/%');
+        $profile->setMethod('GET');
         self::$storage->write($profile);
 
         $profile = new Profile('underscore');
         $profile->setIp('127.0.0.1');
         $profile->setUrl('http://foo.bar/_');
+        $profile->setMethod('GET');
         self::$storage->write($profile);
 
         $profile = new Profile('semicolon');
         $profile->setIp('127.0.0.1');
         $profile->setUrl('http://foo.bar/;');
+        $profile->setMethod('GET');
         self::$storage->write($profile);
 
-        $this->assertEquals(count(self::$storage->find('127.0.0.1', 'http://foo.bar/\'', 10)), 1, '->find() accepts single quotes in URLs');
-        $this->assertEquals(count(self::$storage->find('127.0.0.1', 'http://foo.bar/"', 10)), 1, '->find() accepts double quotes in URLs');
-        $this->assertEquals(count(self::$storage->find('127.0.0.1', 'http://foo\\bar/', 10)), 1, '->find() accepts backslash in URLs');
-        $this->assertEquals(count(self::$storage->find('127.0.0.1', 'http://foo.bar/;', 10)), 1, '->find() accepts semicolon in URLs');
-        $this->assertEquals(count(self::$storage->find('127.0.0.1', 'http://foo.bar/%', 10)), 1, '->find() does not interpret a "%" as a wildcard in the URL');
-        $this->assertEquals(count(self::$storage->find('127.0.0.1', 'http://foo.bar/_', 10)), 1, '->find() does not interpret a "_" as a wildcard in the URL');
+        $this->assertCount(1, self::$storage->find('127.0.0.1', 'http://foo.bar/\'', 10, 'GET'), '->find() accepts single quotes in URLs');
+        $this->assertCount(1, self::$storage->find('127.0.0.1', 'http://foo.bar/"', 10, 'GET'), '->find() accepts double quotes in URLs');
+        $this->assertCount(1, self::$storage->find('127.0.0.1', 'http://foo\\bar/', 10, 'GET'), '->find() accepts backslash in URLs');
+        $this->assertCount(1, self::$storage->find('127.0.0.1', 'http://foo.bar/;', 10, 'GET'), '->find() accepts semicolon in URLs');
+        $this->assertCount(1, self::$storage->find('127.0.0.1', 'http://foo.bar/%', 10, 'GET'), '->find() does not interpret a "%" as a wildcard in the URL');
+        $this->assertCount(1, self::$storage->find('127.0.0.1', 'http://foo.bar/_', 10, 'GET'), '->find() does not interpret a "_" as a wildcard in the URL');
     }
 }

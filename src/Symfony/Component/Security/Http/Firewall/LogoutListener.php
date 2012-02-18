@@ -16,8 +16,8 @@ use Symfony\Component\Security\Http\Logout\LogoutSuccessHandlerInterface;
 use Symfony\Component\Security\Http\Logout\LogoutHandlerInterface;
 use Symfony\Component\Security\Core\SecurityContextInterface;
 use Symfony\Component\Security\Http\HttpUtils;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 
 /**
@@ -72,7 +72,7 @@ class LogoutListener implements ListenerInterface
     {
         $request = $event->getRequest();
 
-        if (!$this->httpUtils->checkRequestPath($request, $this->logoutPath)) {
+        if (!$this->requiresLogout($request)) {
             return;
         }
 
@@ -96,5 +96,21 @@ class LogoutListener implements ListenerInterface
         $this->securityContext->setToken(null);
 
         $event->setResponse($response);
+    }
+
+    /**
+     * Whether this request is asking for logout.
+     *
+     * The default implementation only processed requests to a specific path,
+     * but a subclass could change this to logout requests where
+     * certain parameters is present.
+     *
+     * @param Request $request
+     *
+     * @return Boolean
+     */
+    protected function requiresLogout(Request $request)
+    {
+        return $this->httpUtils->checkRequestPath($request, $this->logoutPath);
     }
 }

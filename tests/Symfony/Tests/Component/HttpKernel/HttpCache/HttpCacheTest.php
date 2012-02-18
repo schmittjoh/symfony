@@ -11,10 +11,46 @@
 
 namespace Symfony\Tests\Component\HttpKernel\HttpCache;
 
+use Symfony\Component\HttpKernel\HttpCache\HttpCache;
+use Symfony\Component\HttpKernel\HttpCache\StoreInterface;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+
 require_once __DIR__.'/HttpCacheTestCase.php';
 
 class HttpCacheTest extends HttpCacheTestCase
 {
+    public function testTerminateDelegatesTerminationOnlyForTerminableInterface()
+    {
+        $storeMock = $this->getMockBuilder('Symfony\\Component\\HttpKernel\\HttpCache\\StoreInterface')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        // does not implement TerminableInterface
+        $kernelMock = $this->getMockBuilder('Symfony\\Component\\HttpKernel\\HttpKernelInterface')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $kernelMock->expects($this->never())
+            ->method('terminate');
+
+        $kernel = new HttpCache($kernelMock, $storeMock);
+        $kernel->terminate(Request::create('/'), new Response());
+
+        // implements TerminableInterface
+        $kernelMock = $this->getMockBuilder('Symfony\\Component\\HttpKernel\\Kernel')
+            ->disableOriginalConstructor()
+            ->setMethods(array('terminate', 'registerBundles', 'registerContainerConfiguration'))
+            ->getMock();
+
+        $kernelMock->expects($this->once())
+            ->method('terminate');
+
+        $kernel = new HttpCache($kernelMock, $storeMock);
+        $kernel->terminate(Request::create('/'), new Response());
+    }
+
     public function testPassesOnNonGetHeadRequests()
     {
         $this->setNextResponse(200);
@@ -404,7 +440,7 @@ class HttpCacheTest extends HttpCacheTestCase
         $this->assertTraceContains('store');
 
         $values = $this->getMetaStorageValues();
-        $this->assertEquals(1, count($values));
+        $this->assertCount(1, $values);
     }
 
     public function testCachesResponsesWithAMaxAgeDirective()
@@ -420,7 +456,7 @@ class HttpCacheTest extends HttpCacheTestCase
         $this->assertTraceContains('store');
 
         $values = $this->getMetaStorageValues();
-        $this->assertEquals(1, count($values));
+        $this->assertCount(1, $values);
     }
 
     public function testCachesResponsesWithASMaxAgeDirective()
@@ -436,7 +472,7 @@ class HttpCacheTest extends HttpCacheTestCase
         $this->assertTraceContains('store');
 
         $values = $this->getMetaStorageValues();
-        $this->assertEquals(1, count($values));
+        $this->assertCount(1, $values);
     }
 
     public function testCachesResponsesWithALastModifiedValidatorButNoFreshnessInformation()
@@ -479,7 +515,7 @@ class HttpCacheTest extends HttpCacheTestCase
         $this->request('GET', '/');
         $this->assertHttpKernelIsNotCalled();
         $this->assertEquals(200, $this->response->getStatusCode());
-        $this->assertEquals($this->responses[0]->headers->get('Date'), $this->response->headers->get('Date'));
+        $this->assertTrue(strtotime($this->responses[0]->headers->get('Date')) - strtotime($this->response->headers->get('Date')) < 2);
         $this->assertTrue($this->response->headers->get('Age') > 0);
         $this->assertNotNull($this->response->headers->get('X-Content-Digest'));
         $this->assertTraceContains('fresh');
@@ -503,7 +539,7 @@ class HttpCacheTest extends HttpCacheTestCase
         $this->request('GET', '/');
         $this->assertHttpKernelIsNotCalled();
         $this->assertEquals(200, $this->response->getStatusCode());
-        $this->assertEquals($this->responses[0]->headers->get('Date'), $this->response->headers->get('Date'));
+        $this->assertTrue(strtotime($this->responses[0]->headers->get('Date')) - strtotime($this->response->headers->get('Date')) < 2);
         $this->assertTrue($this->response->headers->get('Age') > 0);
         $this->assertNotNull($this->response->headers->get('X-Content-Digest'));
         $this->assertTraceContains('fresh');
@@ -527,7 +563,7 @@ class HttpCacheTest extends HttpCacheTestCase
         $this->request('GET', '/');
         $this->assertHttpKernelIsNotCalled();
         $this->assertEquals(200, $this->response->getStatusCode());
-        $this->assertEquals($this->responses[0]->headers->get('Date'), $this->response->headers->get('Date'));
+        $this->assertTrue(strtotime($this->responses[0]->headers->get('Date')) - strtotime($this->response->headers->get('Date')) < 2);
         $this->assertTrue($this->response->headers->get('Age') > 0);
         $this->assertNotNull($this->response->headers->get('X-Content-Digest'));
         $this->assertTraceContains('fresh');
@@ -588,7 +624,7 @@ class HttpCacheTest extends HttpCacheTestCase
 
         # go in and play around with the cached metadata directly ...
         $values = $this->getMetaStorageValues();
-        $this->assertEquals(1, count($values));
+        $this->assertCount(1, $values);
         $tmp = unserialize($values[0]);
         $time = \DateTime::createFromFormat('U', time());
         $tmp[0][1]['expires'] = $time->format(DATE_RFC2822);
@@ -601,7 +637,7 @@ class HttpCacheTest extends HttpCacheTestCase
         $this->request('GET', '/');
         $this->assertHttpKernelIsCalled();
         $this->assertEquals(200, $this->response->getStatusCode());
-        $this->assertEquals(0, $this->response->headers->get('Age'));
+        $this->assertTrue($this->response->headers->get('Age') <= 1);
         $this->assertNotNull($this->response->headers->get('X-Content-Digest'));
         $this->assertTraceContains('stale');
         $this->assertTraceNotContains('fresh');
@@ -640,7 +676,7 @@ class HttpCacheTest extends HttpCacheTestCase
         $this->assertEquals(200, $this->response->getStatusCode());
         $this->assertNotNull($this->response->headers->get('Last-Modified'));
         $this->assertNotNull($this->response->headers->get('X-Content-Digest'));
-        $this->assertEquals(0, $this->response->headers->get('Age'));
+        $this->assertTrue($this->response->headers->get('Age') <= 1);
         $this->assertEquals('Hello World', $this->response->getContent());
         $this->assertTraceContains('stale');
         $this->assertTraceContains('valid');
@@ -676,7 +712,7 @@ class HttpCacheTest extends HttpCacheTestCase
         $this->assertEquals(200, $this->response->getStatusCode());
         $this->assertNotNull($this->response->headers->get('ETag'));
         $this->assertNotNull($this->response->headers->get('X-Content-Digest'));
-        $this->assertEquals(0, $this->response->headers->get('Age'));
+        $this->assertTrue($this->response->headers->get('Age') <= 1);
         $this->assertEquals('Hello World', $this->response->getContent());
         $this->assertTraceContains('stale');
         $this->assertTraceContains('valid');

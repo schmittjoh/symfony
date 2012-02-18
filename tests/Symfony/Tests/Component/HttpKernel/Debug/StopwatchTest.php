@@ -38,7 +38,7 @@ class StopwatchTest extends \PHPUnit_Framework_TestCase
 
         $this->assertInstanceof('Symfony\Component\HttpKernel\Debug\StopwatchEvent', $event);
         $total = $event->getTotalTime();
-        $this->assertTrue($total >= 10 && $total <= 20);
+        $this->assertTrue($total >= 9 && $total <= 20);
     }
 
     public function testLap()
@@ -52,7 +52,7 @@ class StopwatchTest extends \PHPUnit_Framework_TestCase
 
         $this->assertInstanceof('Symfony\Component\HttpKernel\Debug\StopwatchEvent', $event);
         $total = $event->getTotalTime();
-        $this->assertTrue($total >= 20 && $total <= 30);
+        $this->assertTrue($total >= 18 && $total <= 30);
     }
 
     /**
@@ -68,20 +68,54 @@ class StopwatchTest extends \PHPUnit_Framework_TestCase
     {
         $stopwatch = new Stopwatch();
 
-        $stopwatch->startSection();
+        $stopwatch->openSection();
         $stopwatch->start('foo', 'cat');
         $stopwatch->stop('foo');
         $stopwatch->start('bar', 'cat');
         $stopwatch->stop('bar');
-        $stopwatch->stopSection(1);
+        $stopwatch->stopSection('1');
 
-        $stopwatch->startSection();
+        $stopwatch->openSection();
         $stopwatch->start('foobar', 'cat');
         $stopwatch->stop('foobar');
-        $stopwatch->stopSection(2);
+        $stopwatch->stopSection('2');
+
+        $stopwatch->openSection();
+        $stopwatch->start('foobar', 'cat');
+        $stopwatch->stop('foobar');
+        $stopwatch->stopSection('0');
+
 
         // the section is an event by itself
-        $this->assertEquals(3, count($stopwatch->getSectionEvents(1)));
-        $this->assertEquals(2, count($stopwatch->getSectionEvents(2)));
+        $this->assertCount(3, $stopwatch->getSectionEvents('1'));
+        $this->assertCount(2, $stopwatch->getSectionEvents('2'));
+        $this->assertCount(2, $stopwatch->getSectionEvents('0'));
+    }
+
+    public function testReopenASection()
+    {
+        $stopwatch = new Stopwatch();
+
+        $stopwatch->openSection();
+        $stopwatch->start('foo', 'cat');
+        $stopwatch->stopSection('section');
+
+        $stopwatch->openSection('section');
+        $stopwatch->start('bar', 'cat');
+        $stopwatch->stopSection('section');
+
+        $events = $stopwatch->getSectionEvents('section');
+
+        $this->assertCount(3, $events);
+        $this->assertCount(2, $events['__section__']->getPeriods());
+    }
+
+    /**
+     * @expectedException \LogicException
+     */
+    public function testReopenANewSectionShouldThrowAnException()
+    {
+        $stopwatch = new Stopwatch();
+        $stopwatch->openSection('section');
     }
 }

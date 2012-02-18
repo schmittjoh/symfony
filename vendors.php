@@ -25,17 +25,26 @@ if (!is_dir($vendorDir = dirname(__FILE__).'/vendor')) {
     mkdir($vendorDir, 0777, true);
 }
 
+// optional transport change
+$transport = false;
+if (isset($argv[1]) && in_array($argv[1], array('--transport=http', '--transport=https', '--transport=git'))) {
+    $transport = preg_replace('/^--transport=(.*)$/', '$1', $argv[1]);
+}
+
 $deps = array(
     array('doctrine', 'http://github.com/doctrine/doctrine2.git', 'origin/master'),
     array('doctrine-dbal', 'http://github.com/doctrine/dbal.git', 'origin/master'),
     array('doctrine-common', 'http://github.com/doctrine/common.git', 'origin/master'),
-    array('monolog', 'http://github.com/Seldaek/monolog.git', '1.0.2'),
-    array('swiftmailer', 'http://github.com/swiftmailer/swiftmailer.git', 'origin/master'),
     array('twig', 'http://github.com/fabpot/Twig.git', 'origin/master'),
+    array('propel', 'http://github.com/propelorm/Propel.git', 'origin/master'),
 );
 
 foreach ($deps as $dep) {
     list($name, $url, $rev) = $dep;
+
+    if ($transport) {
+        $url = preg_replace('/^(http:|https:|git:)(.*)/', $transport . ':$2', $url);
+    }
 
     $installDir = $vendorDir.'/'.$name;
     $install = false;

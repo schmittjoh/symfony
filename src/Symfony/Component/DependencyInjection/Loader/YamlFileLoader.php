@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Yaml\Yaml;
 
@@ -125,7 +126,7 @@ class YamlFileLoader extends FileLoader
             $this->container->setAlias($id, substr($service, 1));
 
             return;
-        } else if (isset($service['alias'])) {
+        } elseif (isset($service['alias'])) {
             $public = !array_key_exists('public', $service) || (Boolean) $service['public'];
             $this->container->setAlias($id, new Alias($service['alias'], $public));
 
@@ -202,12 +203,12 @@ class YamlFileLoader extends FileLoader
 
         if (isset($service['tags'])) {
             if (!is_array($service['tags'])) {
-                throw new \InvalidArgumentException(sprintf('Parameter "tags" must be an array for service "%s" in %s.', $id, $file));
+                throw new InvalidArgumentException(sprintf('Parameter "tags" must be an array for service "%s" in %s.', $id, $file));
             }
 
             foreach ($service['tags'] as $tag) {
                 if (!isset($tag['name'])) {
-                    throw new \InvalidArgumentException(sprintf('A "tags" entry is missing a "name" key for service "%s" in %s.', $id, $file));
+                    throw new InvalidArgumentException(sprintf('A "tags" entry is missing a "name" key for service "%s" in %s.', $id, $file));
                 }
 
                 $name = $tag['name'];
@@ -224,6 +225,7 @@ class YamlFileLoader extends FileLoader
      * Loads a YAML file.
      *
      * @param string $file
+     *
      * @return array The file content
      */
     private function loadFile($file)
@@ -236,9 +238,10 @@ class YamlFileLoader extends FileLoader
      *
      * @param mixed $content
      * @param string $file
+     *
      * @return array
      *
-     * @throws \InvalidArgumentException When service file is not valid
+     * @throws InvalidArgumentException When service file is not valid
      */
     private function validate($content, $file)
     {
@@ -247,7 +250,7 @@ class YamlFileLoader extends FileLoader
         }
 
         if (!is_array($content)) {
-            throw new \InvalidArgumentException(sprintf('The service file "%s" is not valid.', $file));
+            throw new InvalidArgumentException(sprintf('The service file "%s" is not valid.', $file));
         }
 
         foreach (array_keys($content) as $namespace) {
@@ -257,7 +260,7 @@ class YamlFileLoader extends FileLoader
 
             if (!$this->container->hasExtension($namespace)) {
                 $extensionNamespaces = array_filter(array_map(function ($ext) { return $ext->getAlias(); }, $this->container->getExtensions()));
-                throw new \InvalidArgumentException(sprintf(
+                throw new InvalidArgumentException(sprintf(
                     'There is no extension able to load the configuration for "%s" (in %s). Looked for namespace "%s", found %s',
                     $namespace,
                     $file,
@@ -274,13 +277,14 @@ class YamlFileLoader extends FileLoader
      * Resolves services.
      *
      * @param string $value
+     *
      * @return Reference
      */
     private function resolveServices($value)
     {
         if (is_array($value)) {
             $value = array_map(array($this, 'resolveServices'), $value);
-        } else if (is_string($value) &&  0 === strpos($value, '@')) {
+        } elseif (is_string($value) &&  0 === strpos($value, '@')) {
             if (0 === strpos($value, '@?')) {
                 $value = substr($value, 2);
                 $invalidBehavior = ContainerInterface::IGNORE_ON_INVALID_REFERENCE;

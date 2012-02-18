@@ -11,8 +11,8 @@
 
 namespace Symfony\Tests\Component\Form\Extension\Core\Type;
 
-use Symfony\Component\Form\ChoiceField;
-use Symfony\Component\Form\Exception\UnexpectedTypeException;
+use Symfony\Component\Form\Extension\Core\ChoiceList\ObjectChoiceList;
+use Symfony\Component\Form\Extension\Core\View\ChoiceView;
 
 class ChoiceTypeTest extends TypeTestCase
 {
@@ -31,6 +31,8 @@ class ChoiceTypeTest extends TypeTestCase
         3 => 'Jon',
         4 => 'Roman',
     );
+
+    private $objectChoices;
 
     private $stringButNumericChoices = array(
         '0' => 'Bernhard',
@@ -52,8 +54,29 @@ class ChoiceTypeTest extends TypeTestCase
         )
     );
 
+    protected function setUp()
+    {
+        parent::setUp();
+
+        $this->objectChoices = array(
+            (object) array('id' => 1, 'name' => 'Bernhard'),
+            (object) array('id' => 2, 'name' => 'Fabien'),
+            (object) array('id' => 3, 'name' => 'Kris'),
+            (object) array('id' => 4, 'name' => 'Jon'),
+            (object) array('id' => 5, 'name' => 'Roman'),
+        );
+    }
+
+
+    protected function tearDown()
+    {
+        parent::tearDown();
+
+        $this->objectChoices = null;
+    }
+
     /**
-     * @expectedException Symfony\Component\Form\Exception\UnexpectedTypeException
+     * @expectedException \PHPUnit_Framework_Error
      */
     public function testChoicesOptionExpectsArray()
     {
@@ -70,6 +93,44 @@ class ChoiceTypeTest extends TypeTestCase
         $form = $this->factory->create('choice', null, array(
             'choice_list' => array('foo' => 'foo'),
         ));
+    }
+
+    /**
+     * @expectedException Symfony\Component\Form\Exception\FormException
+     */
+    public function testEitherChoiceListOrChoicesMustBeSet()
+    {
+        $form = $this->factory->create('choice', null, array(
+        ));
+    }
+
+    public function testExpandedChoicesOptionsTurnIntoFields()
+    {
+        $form = $this->factory->create('choice', null, array(
+            'expanded'  => true,
+            'choices'   => $this->choices,
+        ));
+
+        $this->assertCount($form->count(), $this->choices, 'Each choice should become a new field');
+    }
+
+    public function testExpandedChoicesOptionsAreFlattened()
+    {
+        $form = $this->factory->create('choice', null, array(
+            'expanded'  => true,
+            'choices'   => $this->groupedChoices,
+        ));
+
+        $flattened = array();
+        foreach ($this->groupedChoices as $choices) {
+            $flattened = array_merge($flattened, array_keys($choices));
+        }
+
+        $this->assertCount($form->count(), $flattened, 'Each nested choice should become a new field, not the groups');
+
+        foreach ($flattened as $value => $choice) {
+            $this->assertTrue($form->has($value), 'Flattened choice is named after it\'s value');
+        }
     }
 
     public function testExpandedCheckboxesAreNeverRequired()
@@ -122,10 +183,33 @@ class ChoiceTypeTest extends TypeTestCase
             'choices' => $this->choices,
         ));
 
-        $form->bind('b');
+        $form->bind('1');
 
         $this->assertEquals('b', $form->getData());
-        $this->assertEquals('b', $form->getClientData());
+        $this->assertEquals('1', $form->getClientData());
+    }
+
+    public function testBindSingleNonExpandedObjectChoices()
+    {
+        $form = $this->factory->create('choice', null, array(
+            'multiple' => false,
+            'expanded' => false,
+            'choice_list' => new ObjectChoiceList(
+                $this->objectChoices,
+                // label path
+                'name',
+                array(),
+                null,
+                // value path
+                'id'
+            ),
+        ));
+
+        // "id" value of the second entry
+        $form->bind('2');
+
+        $this->assertEquals($this->objectChoices[1], $form->getData());
+        $this->assertEquals('2', $form->getClientData());
     }
 
     public function testBindMultipleNonExpanded()
@@ -136,10 +220,32 @@ class ChoiceTypeTest extends TypeTestCase
             'choices' => $this->choices,
         ));
 
-        $form->bind(array('a', 'b'));
+        $form->bind(array('0', '1'));
 
         $this->assertEquals(array('a', 'b'), $form->getData());
-        $this->assertEquals(array('a', 'b'), $form->getClientData());
+        $this->assertEquals(array('0', '1'), $form->getClientData());
+    }
+
+    public function testBindMultipleNonExpandedObjectChoices()
+    {
+        $form = $this->factory->create('choice', null, array(
+            'multiple' => true,
+            'expanded' => false,
+            'choice_list' => new ObjectChoiceList(
+                $this->objectChoices,
+                // label path
+                'name',
+                array(),
+                null,
+                // value path
+                'id'
+            ),
+        ));
+
+        $form->bind(array('2', '3'));
+
+        $this->assertEquals(array($this->objectChoices[1], $this->objectChoices[2]), $form->getData());
+        $this->assertEquals(array('2', '3'), $form->getClientData());
     }
 
     public function testBindSingleExpanded()
@@ -150,19 +256,19 @@ class ChoiceTypeTest extends TypeTestCase
             'choices' => $this->choices,
         ));
 
-        $form->bind('b');
+        $form->bind('1');
 
         $this->assertSame('b', $form->getData());
-        $this->assertFalse($form['a']->getData());
-        $this->assertTrue($form['b']->getData());
-        $this->assertFalse($form['c']->getData());
-        $this->assertFalse($form['d']->getData());
-        $this->assertFalse($form['e']->getData());
-        $this->assertSame('', $form['a']->getClientData());
-        $this->assertSame('1', $form['b']->getClientData());
-        $this->assertSame('', $form['c']->getClientData());
-        $this->assertSame('', $form['d']->getClientData());
-        $this->assertSame('', $form['e']->getClientData());
+        $this->assertFalse($form[0]->getData());
+        $this->assertTrue($form[1]->getData());
+        $this->assertFalse($form[2]->getData());
+        $this->assertFalse($form[3]->getData());
+        $this->assertFalse($form[4]->getData());
+        $this->assertSame('', $form[0]->getClientData());
+        $this->assertSame('1', $form[1]->getClientData());
+        $this->assertSame('', $form[2]->getClientData());
+        $this->assertSame('', $form[3]->getClientData());
+        $this->assertSame('', $form[4]->getClientData());
     }
 
     public function testBindSingleExpandedWithFalseDoesNotHaveExtraFields()
@@ -179,6 +285,57 @@ class ChoiceTypeTest extends TypeTestCase
         $this->assertNull($form->getData());
     }
 
+    public function testBindSingleExpandedWithEmptyField()
+    {
+        $form = $this->factory->create('choice', null, array(
+            'multiple' => false,
+            'expanded' => true,
+            'choices' => array(
+                '' => 'Empty',
+                '1' => 'Not empty',
+            ),
+        ));
+
+        $form->bind('0');
+
+        $this->assertNull($form->getData());
+        $this->assertTrue($form[0]->getData());
+        $this->assertFalse($form[1]->getData());
+        $this->assertSame('1', $form[0]->getClientData());
+        $this->assertSame('', $form[1]->getClientData());
+    }
+
+    public function testBindSingleExpandedObjectChoices()
+    {
+        $form = $this->factory->create('choice', null, array(
+            'multiple' => false,
+            'expanded' => true,
+            'choice_list' => new ObjectChoiceList(
+                $this->objectChoices,
+                // label path
+                'name',
+                array(),
+                null,
+                // value path
+                'id'
+            ),
+        ));
+
+        $form->bind('2');
+
+        $this->assertSame($this->objectChoices[1], $form->getData());
+        $this->assertFalse($form[0]->getData());
+        $this->assertTrue($form[1]->getData());
+        $this->assertFalse($form[2]->getData());
+        $this->assertFalse($form[3]->getData());
+        $this->assertFalse($form[4]->getData());
+        $this->assertSame('', $form[0]->getClientData());
+        $this->assertSame('1', $form[1]->getClientData());
+        $this->assertSame('', $form[2]->getClientData());
+        $this->assertSame('', $form[3]->getClientData());
+        $this->assertSame('', $form[4]->getClientData());
+    }
+
     public function testBindSingleExpandedNumericChoices()
     {
         $form = $this->factory->create('choice', null, array(
@@ -189,7 +346,7 @@ class ChoiceTypeTest extends TypeTestCase
 
         $form->bind('1');
 
-        $this->assertSame('1', $form->getData());
+        $this->assertSame(1, $form->getData());
         $this->assertFalse($form[0]->getData());
         $this->assertTrue($form[1]->getData());
         $this->assertFalse($form[2]->getData());
@@ -212,7 +369,7 @@ class ChoiceTypeTest extends TypeTestCase
 
         $form->bind('1');
 
-        $this->assertSame('1', $form->getData());
+        $this->assertSame(1, $form->getData());
         $this->assertFalse($form[0]->getData());
         $this->assertTrue($form[1]->getData());
         $this->assertFalse($form[2]->getData());
@@ -233,19 +390,50 @@ class ChoiceTypeTest extends TypeTestCase
             'choices' => $this->choices,
         ));
 
-        $form->bind(array('a' => 'a', 'b' => 'b'));
+        $form->bind(array(0 => 'a', 1 => 'b'));
 
-        $this->assertSame(array('a', 'b'), $form->getData());
-        $this->assertTrue($form['a']->getData());
-        $this->assertTrue($form['b']->getData());
-        $this->assertFalse($form['c']->getData());
-        $this->assertFalse($form['d']->getData());
-        $this->assertFalse($form['e']->getData());
-        $this->assertSame('1', $form['a']->getClientData());
-        $this->assertSame('1', $form['b']->getClientData());
-        $this->assertSame('', $form['c']->getClientData());
-        $this->assertSame('', $form['d']->getClientData());
-        $this->assertSame('', $form['e']->getClientData());
+        $this->assertSame(array(0 => 'a', 1 => 'b'), $form->getData());
+        $this->assertTrue($form[0]->getData());
+        $this->assertTrue($form[1]->getData());
+        $this->assertFalse($form[2]->getData());
+        $this->assertFalse($form[3]->getData());
+        $this->assertFalse($form[4]->getData());
+        $this->assertSame('1', $form[0]->getClientData());
+        $this->assertSame('1', $form[1]->getClientData());
+        $this->assertSame('', $form[2]->getClientData());
+        $this->assertSame('', $form[3]->getClientData());
+        $this->assertSame('', $form[4]->getClientData());
+    }
+
+    public function testBindMultipleExpandedObjectChoices()
+    {
+        $form = $this->factory->create('choice', null, array(
+            'multiple' => true,
+            'expanded' => true,
+            'choice_list' => new ObjectChoiceList(
+                $this->objectChoices,
+                // label path
+                'name',
+                array(),
+                null,
+                // value path
+                'id'
+            ),
+        ));
+
+        $form->bind(array(0 => '1', 1 => '2'));
+
+        $this->assertSame(array($this->objectChoices[0], $this->objectChoices[1]), $form->getData());
+        $this->assertTrue($form[0]->getData());
+        $this->assertTrue($form[1]->getData());
+        $this->assertFalse($form[2]->getData());
+        $this->assertFalse($form[3]->getData());
+        $this->assertFalse($form[4]->getData());
+        $this->assertSame('1', $form[0]->getClientData());
+        $this->assertSame('1', $form[1]->getClientData());
+        $this->assertSame('', $form[2]->getClientData());
+        $this->assertSame('', $form[3]->getClientData());
+        $this->assertSame('', $form[4]->getClientData());
     }
 
     public function testBindMultipleExpandedNumericChoices()
@@ -256,7 +444,7 @@ class ChoiceTypeTest extends TypeTestCase
             'choices' => $this->numericChoices,
         ));
 
-        $form->bind(array(1 => 1, 2 => 2));
+        $form->bind(array(1 => '1', 2 => '2'));
 
         $this->assertSame(array(1, 2), $form->getData());
         $this->assertFalse($form[0]->getData());
@@ -409,7 +597,12 @@ class ChoiceTypeTest extends TypeTestCase
         ));
         $view = $form->createView();
 
-        $this->assertSame($choices, $view->get('choices'));
+        $this->assertEquals(array(
+            new ChoiceView('0', 'A'),
+            new ChoiceView('1', 'B'),
+            new ChoiceView('2', 'C'),
+            new ChoiceView('3', 'D'),
+        ), $view->get('choices'));
     }
 
     public function testPassPreferredChoicesToView()
@@ -421,8 +614,41 @@ class ChoiceTypeTest extends TypeTestCase
         ));
         $view = $form->createView();
 
-        $this->assertSame(array('a' => 'A', 'c' => 'C'), $view->get('choices'));
-        $this->assertSame(array('b' => 'B', 'd' => 'D'), $view->get('preferred_choices'));
+        $this->assertEquals(array(
+            0 => new ChoiceView('0', 'A'),
+            2 => new ChoiceView('2', 'C'),
+        ), $view->get('choices'));
+        $this->assertEquals(array(
+            1 => new ChoiceView('1', 'B'),
+            3 => new ChoiceView('3', 'D'),
+        ), $view->get('preferred_choices'));
+    }
+
+    public function testPassHierarchicalChoicesToView()
+    {
+        $form = $this->factory->create('choice', null, array(
+            'choices' => $this->groupedChoices,
+            'preferred_choices' => array('b', 'd'),
+        ));
+        $view = $form->createView();
+
+        $this->assertEquals(array(
+            'Symfony' => array(
+                0 => new ChoiceView('0', 'Bernhard'),
+                2 => new ChoiceView('2', 'Kris'),
+            ),
+            'Doctrine' => array(
+                4 => new ChoiceView('4', 'Roman'),
+            ),
+        ), $view->get('choices'));
+        $this->assertEquals(array(
+            'Symfony' => array(
+                1 => new ChoiceView('1', 'Fabien'),
+            ),
+            'Doctrine' => array(
+                3 => new ChoiceView('3', 'Jon'),
+            ),
+        ), $view->get('preferred_choices'));
     }
 
     public function testAdjustFullNameForMultipleNonExpanded()
@@ -435,5 +661,13 @@ class ChoiceTypeTest extends TypeTestCase
         $view = $form->createView();
 
         $this->assertSame('name[]', $view->get('full_name'));
+    }
+
+    // https://github.com/symfony/symfony/issues/3298
+    public function testInitializeWithEmptyChoices()
+    {
+        $this->factory->createNamed('choice', 'name', null, array(
+            'choices' => array(),
+        ));
     }
 }

@@ -31,7 +31,7 @@ class StopwatchEventTest extends \PHPUnit_Framework_TestCase
         $event = new StopwatchEvent(microtime(true) * 1000);
         $this->assertEquals('default', $event->getCategory());
 
-        $event = new StopwatchEvent(time(), 'cat');
+        $event = new StopwatchEvent(microtime(true) * 1000, 'cat');
         $this->assertEquals('cat', $event->getCategory());
     }
 
@@ -43,14 +43,14 @@ class StopwatchEventTest extends \PHPUnit_Framework_TestCase
         $event = new StopwatchEvent(microtime(true) * 1000);
         $event->start();
         $event->stop();
-        $this->assertEquals(1, count($event->getPeriods()));
+        $this->assertCount(1, $event->getPeriods());
 
         $event = new StopwatchEvent(microtime(true) * 1000);
         $event->start();
         $event->stop();
         $event->start();
         $event->stop();
-        $this->assertEquals(2, count($event->getPeriods()));
+        $this->assertCount(2, $event->getPeriods());
     }
 
     public function testLap()
@@ -59,7 +59,7 @@ class StopwatchEventTest extends \PHPUnit_Framework_TestCase
         $event->start();
         $event->lap();
         $event->stop();
-        $this->assertEquals(2, count($event->getPeriods()));
+        $this->assertCount(2, $event->getPeriods());
     }
 
     public function testTotalTime()
@@ -69,7 +69,7 @@ class StopwatchEventTest extends \PHPUnit_Framework_TestCase
         usleep(10000);
         $event->stop();
         $total = $event->getTotalTime();
-        $this->assertTrue($total >= 10 && $total <= 20);
+        $this->assertTrue($total >= 9 && $total <= 20);
 
         $event = new StopwatchEvent(microtime(true) * 1000);
         $event->start();
@@ -79,7 +79,7 @@ class StopwatchEventTest extends \PHPUnit_Framework_TestCase
         usleep(10000);
         $event->stop();
         $total = $event->getTotalTime();
-        $this->assertTrue($total >= 20 && $total <= 30);
+        $this->assertTrue($total >= 18 && $total <= 30);
     }
 
     /**
@@ -101,18 +101,18 @@ class StopwatchEventTest extends \PHPUnit_Framework_TestCase
         usleep(10000);
         $event->ensureStopped();
         $total = $event->getTotalTime();
-        $this->assertTrue($total >= 30 && $total <= 40);
+        $this->assertTrue($total >= 27 && $total <= 40);
     }
 
     public function testStartTime()
     {
         $event = new StopwatchEvent(microtime(true) * 1000);
-        $this->assertEquals(0, $event->getStartTime());
+        $this->assertTrue($event->getStartTime() < 0.5);
 
         $event = new StopwatchEvent(microtime(true) * 1000);
         $event->start();
         $event->stop();
-        $this->assertEquals(0, $event->getStartTime());
+        $this->assertTrue($event->getStartTime() < 1);
 
         $event = new StopwatchEvent(microtime(true) * 1000);
         $event->start();
@@ -139,6 +139,14 @@ class StopwatchEventTest extends \PHPUnit_Framework_TestCase
         usleep(10000);
         $event->stop();
         $end = $event->getEndTime();
-        $this->assertTrue($end >= 20 && $end <= 30);
+        $this->assertTrue($end >= 18 && $end <= 30);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testInvalidOriginThrowsAnException()
+    {
+        new StopwatchEvent("abc");
     }
 }

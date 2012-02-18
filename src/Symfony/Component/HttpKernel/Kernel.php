@@ -21,6 +21,7 @@ use Symfony\Component\DependencyInjection\Loader\IniFileLoader;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Loader\ClosureLoader;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
 use Symfony\Component\HttpKernel\Config\FileLocator;
@@ -44,7 +45,7 @@ use Symfony\Component\ClassLoader\DebugUniversalClassLoader;
  *
  * @api
  */
-abstract class Kernel implements KernelInterface
+abstract class Kernel implements KernelInterface, TerminableInterface
 {
     protected $bundles;
     protected $bundleMap;
@@ -132,6 +133,22 @@ abstract class Kernel implements KernelInterface
         }
 
         $this->booted = true;
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @api
+     */
+    public function terminate(Request $request, Response $response)
+    {
+        if (false === $this->booted) {
+            return;
+        }
+
+        if ($this->getHttpKernel() instanceof TerminableInterface) {
+            $this->getHttpKernel()->terminate($request, $response);
+        }
     }
 
     /**
@@ -597,7 +614,7 @@ abstract class Kernel implements KernelInterface
     {
         $parameters = array();
         foreach ($_SERVER as $key => $value) {
-            if ('SYMFONY__' === substr($key, 0, 9)) {
+            if (0 === strpos($key, 'SYMFONY__')) {
                 $parameters[strtolower(str_replace('__', '.', substr($key, 9)))] = $value;
             }
         }

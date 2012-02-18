@@ -14,8 +14,8 @@ namespace Symfony\Component\Form\Extension\Core\Type;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormBuilder;
-use Symfony\Component\Form\Extension\Core\ChoiceList\PaddedChoiceList;
 use Symfony\Component\Form\ReversedTransformer;
+use Symfony\Component\Form\Extension\Core\ChoiceList\ChoiceList;
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToStringTransformer;
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToTimestampTransformer;
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToArrayTransformer;
@@ -35,42 +35,62 @@ class TimeType extends AbstractType
             $parts[] = 'second';
         }
 
-        if ($options['widget'] === 'single_text') {
+        if ('single_text' === $options['widget']) {
             $builder->appendClientTransformer(new DateTimeToStringTransformer($options['data_timezone'], $options['user_timezone'], $format));
         } else {
             $hourOptions = $minuteOptions = $secondOptions = array();
 
-            if ($options['widget'] === 'choice') {
+            if ('choice' === $options['widget']) {
                 if (is_array($options['empty_value'])) {
                     $options['empty_value'] = array_merge(array('hour' => null, 'minute' => null, 'second' => null), $options['empty_value']);
                 } else {
                     $options['empty_value'] = array('hour' => $options['empty_value'], 'minute' => $options['empty_value'], 'second' => $options['empty_value']);
                 }
 
+                $hours = $minutes = array();
+
+                foreach ($options['hours'] as $hour) {
+                    $hours[$hour] = str_pad($hour, 2, '0', STR_PAD_LEFT);
+                }
+                foreach ($options['minutes'] as $minute) {
+                    $minutes[$minute] = str_pad($minute, 2, '0', STR_PAD_LEFT);
+                }
+
                 // Only pass a subset of the options to children
                 $hourOptions = array(
-                    'choice_list' => new PaddedChoiceList(
-                        array_combine($options['hours'], $options['hours']), 2, '0', STR_PAD_LEFT
-                    ),
+                    'choices' => $hours,
+                    'value_strategy' => ChoiceList::COPY_CHOICE,
+                    'index_strategy' => ChoiceList::COPY_CHOICE,
                     'empty_value' => $options['empty_value']['hour'],
-                    'required' => $options['required'],
                 );
                 $minuteOptions = array(
-                    'choice_list' => new PaddedChoiceList(
-                        array_combine($options['minutes'], $options['minutes']), 2, '0', STR_PAD_LEFT
-                    ),
+                    'choices' => $minutes,
+                    'value_strategy' => ChoiceList::COPY_CHOICE,
+                    'index_strategy' => ChoiceList::COPY_CHOICE,
                     'empty_value' => $options['empty_value']['minute'],
-                    'required' => $options['required'],
                 );
 
                 if ($options['with_seconds']) {
+                    $seconds = array();
+
+                    foreach ($options['seconds'] as $second) {
+                        $seconds[$second] = str_pad($second, 2, '0', STR_PAD_LEFT);
+                    }
+
                     $secondOptions = array(
-                        'choice_list' => new PaddedChoiceList(
-                            array_combine($options['seconds'], $options['seconds']), 2, '0', STR_PAD_LEFT
-                        ),
+                        'choices' => $seconds,
+                        'value_strategy' => ChoiceList::COPY_CHOICE,
+                        'index_strategy' => ChoiceList::COPY_CHOICE,
                         'empty_value' => $options['empty_value']['second'],
-                        'required' => $options['required'],
                     );
+                }
+
+                // Append generic carry-along options
+                foreach (array('required', 'translation_domain') as $passOpt) {
+                    $hourOptions[$passOpt] = $minuteOptions[$passOpt] = $options[$passOpt];
+                    if ($options['with_seconds']) {
+                        $secondOptions[$passOpt] = $options[$passOpt];
+                    }
                 }
             }
 
@@ -83,18 +103,18 @@ class TimeType extends AbstractType
                 $builder->add('second', $options['widget'], $secondOptions);
             }
 
-            $builder->appendClientTransformer(new DateTimeToArrayTransformer($options['data_timezone'], $options['user_timezone'], $parts, $options['widget'] === 'text'));
+            $builder->appendClientTransformer(new DateTimeToArrayTransformer($options['data_timezone'], $options['user_timezone'], $parts, 'text' === $options['widget']));
         }
 
-        if ($options['input'] === 'string') {
+        if ('string' === $options['input']) {
             $builder->appendNormTransformer(new ReversedTransformer(
                 new DateTimeToStringTransformer($options['data_timezone'], $options['data_timezone'], $format)
             ));
-        } else if ($options['input'] === 'timestamp') {
+        } elseif ('timestamp' === $options['input']) {
             $builder->appendNormTransformer(new ReversedTransformer(
                 new DateTimeToTimestampTransformer($options['data_timezone'], $options['data_timezone'])
             ));
-        } else if ($options['input'] === 'array') {
+        } elseif ('array' === $options['input']) {
             $builder->appendNormTransformer(new ReversedTransformer(
                 new DateTimeToArrayTransformer($options['data_timezone'], $options['data_timezone'], $parts)
             ));
@@ -136,6 +156,11 @@ class TimeType extends AbstractType
             // them like immutable value objects
             'by_reference'   => false,
             'error_bubbling' => false,
+            // If initialized with a \DateTime object, FieldType initializes
+            // this option to "\DateTime". Since the internal, normalized
+            // representation is not \DateTime, but an array, we need to unset
+            // this option.
+            'data_class'     => null,
         );
     }
 
@@ -164,7 +189,7 @@ class TimeType extends AbstractType
      */
     public function getParent(array $options)
     {
-        return $options['widget'] === 'single_text' ? 'field' : 'form';
+        return isset($options['widget']) && 'single_text' === $options['widget'] ? 'field' : 'form';
     }
 
     /**

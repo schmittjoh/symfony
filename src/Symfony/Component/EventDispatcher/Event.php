@@ -20,9 +20,6 @@ namespace Symfony\Component\EventDispatcher;
  * You can call the method stopPropagation() to abort the execution of
  * further listeners in your event listener.
  *
- * @link    www.doctrine-project.org
- * @since   2.0
- * @version $Revision: 3938 $
  * @author  Guilherme Blanco <guilhermeblanco@hotmail.com>
  * @author  Jonathan Wage <jonwage@gmail.com>
  * @author  Roman Borschel <roman@code-factory.org>
@@ -36,6 +33,16 @@ class Event
      * @var Boolean Whether no further event listeners should be triggered
      */
     private $propagationStopped = false;
+
+    /**
+     * @var EventDispatcher Dispatcher that dispatched this event
+     */
+    private $dispatcher;
+
+    /**
+     * @var string This event's name
+     */
+    private $name;
 
     /**
      * Returns whether further event listeners should be triggered.
@@ -62,5 +69,53 @@ class Event
     public function stopPropagation()
     {
         $this->propagationStopped = true;
+    }
+
+    /**
+     * Stores the EventDispatcher that dispatches this Event
+     *
+     * @param EventDispatcher $dispatcher
+     *
+     * @api
+     */
+    public function setDispatcher(EventDispatcher $dispatcher)
+    {
+        $this->dispatcher = $dispatcher;
+    }
+
+    /**
+     * Returns the EventDispatcher that dispatches this Event
+     *
+     * @return EventDispatcher
+     *
+     * @api
+     */
+    public function getDispatcher()
+    {
+        return $this->dispatcher;
+    }
+
+    /**
+     * Gets the event's name.
+     *
+     * @return string
+     *
+     * @api
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Sets the event's name property.
+     *
+     * @param string $name The event name.
+     *
+     * @api
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
     }
 }

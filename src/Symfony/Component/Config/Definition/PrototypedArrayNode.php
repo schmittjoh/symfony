@@ -14,6 +14,7 @@ namespace Symfony\Component\Config\Definition;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Exception\DuplicateKeyException;
 use Symfony\Component\Config\Definition\Exception\UnsetKeyException;
+use Symfony\Component\Config\Definition\Exception\Exception;
 
 /**
  * Represents a prototyped Array node in the config tree.
@@ -39,6 +40,7 @@ class PrototypedArrayNode extends ArrayNode
         parent::__construct($name, $parent);
 
         $this->minNumberOfElements = 0;
+        $this->defaultValue = array();
     }
 
     /**
@@ -53,21 +55,25 @@ class PrototypedArrayNode extends ArrayNode
     }
 
     /**
-     * The name of the attribute which value should be used as key.
+     * Sets the attribute which value is to be used as key.
      *
-     * This is only relevant for XML configurations, and only in combination
-     * with a prototype based node.
+     * This is useful when you have an indexed array that should be an
+     * associative array. You can select an item from within the array
+     * to be the key of the particular item. For example, if "id" is the
+     * "key", then:
      *
-     * For example, if "id" is the keyAttribute, then:
+     *     array(
+     *         array('id' => 'my_name', 'foo' => 'bar'),
+     *     );
      *
-     *     array('id' => 'my_name', 'foo' => 'bar')
+     *  becomes
      *
-     * becomes
+     *      array(
+     *          'my_name' => array('foo' => 'bar'),
+     *      );
      *
-     *     'my_name' => array('foo' => 'bar')
-     *
-     * If $remove is false, the resulting array will still have the
-     * "'id' => 'my_name'" item in it.
+     * If you'd like "'id' => 'my_name'" to still be present in the resulting
+     * array, then you can set the second argument of this method to false.
      *
      * @param string  $attribute The name of the attribute which value is to be used as a key
      * @param Boolean $remove Whether or not to remove the key
@@ -79,9 +85,20 @@ class PrototypedArrayNode extends ArrayNode
     }
 
     /**
+     * Retrieves the name of the attribute which value should be used as key.
+     *
+     * @return string The name of the attribute
+     */
+    public function getKeyAttribute()
+    {
+        return $this->keyAttribute;
+    }
+
+    /**
      * Sets the default value of this node.
      *
      * @param string $value
+     *
      * @throws \InvalidArgumentException if the default value is not an array
      */
     public function setDefaultValue($value)
@@ -110,7 +127,7 @@ class PrototypedArrayNode extends ArrayNode
      */
     public function getDefaultValue()
     {
-        return $this->defaultValue ?: array();
+        return $this->defaultValue;
     }
 
     /**
@@ -124,21 +141,34 @@ class PrototypedArrayNode extends ArrayNode
     }
 
     /**
+     * Retrieves the prototype
+     *
+     * @return PrototypeNodeInterface The prototype
+     */
+    public function getPrototype()
+    {
+        return $this->prototype;
+    }
+
+    /**
      * Disable adding concrete children for prototyped nodes.
      *
      * @param NodeInterface $node The child node to add
+     *
      * @throws \RuntimeException Prototyped array nodes can't have concrete children.
      */
     public function addChild(NodeInterface $node)
     {
-        throw new \RuntimeException('A prototyped array node can not have concrete children.');
+        throw new Exception('A prototyped array node can not have concrete children.');
     }
 
     /**
      * Finalizes the value of this node.
      *
      * @param mixed $value
-     * @return mixed The finalised value
+     *
+     * @return mixed The finalized value
+     *
      * @throws UnsetKeyException
      * @throws InvalidConfigurationException if the node doesn't have enough children
      */
@@ -173,6 +203,7 @@ class PrototypedArrayNode extends ArrayNode
      * Normalizes the value.
      *
      * @param mixed $value The value to normalize
+     *
      * @return mixed The normalized value
      */
     protected function normalizeValue($value)
@@ -192,7 +223,7 @@ class PrototypedArrayNode extends ArrayNode
                     $ex->setPath($this->getPath());
 
                     throw $ex;
-                } else if (isset($v[$this->keyAttribute])) {
+                } elseif (isset($v[$this->keyAttribute])) {
                     $k = $v[$this->keyAttribute];
 
                     // remove the key attribute when required
@@ -231,7 +262,9 @@ class PrototypedArrayNode extends ArrayNode
      *
      * @param mixed $leftSide The left side to merge.
      * @param mixed $rightSide The right side to merge.
+     *
      * @return mixed The merged values
+     *
      * @throws InvalidConfigurationException
      * @throws \RuntimeException
      */

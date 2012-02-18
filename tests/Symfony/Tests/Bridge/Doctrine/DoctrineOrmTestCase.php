@@ -29,7 +29,11 @@ abstract class DoctrineOrmTestCase extends \PHPUnit_Framework_TestCase
      */
     static public function createTestEntityManager($paths = array())
     {
+        if (!class_exists('PDO') || !in_array('sqlite', \PDO::getAvailableDrivers())) {
+            self::markTestSkipped('This test requires SQLite support in your environment');
+        }
         $config = new \Doctrine\ORM\Configuration();
+        $config->setEntityNamespaces(array('SymfonyTestsDoctrine' => 'Symfony\Tests\Bridge\Doctrine\Fixtures'));
         $config->setAutoGenerateProxyClasses(true);
         $config->setProxyDir(\sys_get_temp_dir());
         $config->setProxyNamespace('SymfonyTests\Doctrine');

@@ -18,7 +18,6 @@ use Symfony\Component\HttpKernel\Debug\TraceableEventDispatcherInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\HttpKernel\Profiler\Profiler;
-use Symfony\Component\HttpKernel\Profiler\Profile;
 
 /**
  * Extends the ContainerAwareEventDispatcher to add some debugging tools.
@@ -30,6 +29,7 @@ class TraceableEventDispatcher extends ContainerAwareEventDispatcher implements 
     private $logger;
     private $called;
     private $stopwatch;
+    private $priorities;
 
     /**
      * Constructor.
@@ -49,14 +49,22 @@ class TraceableEventDispatcher extends ContainerAwareEventDispatcher implements 
 
     public function dispatch($eventName, Event $event = null)
     {
-        if ('kernel.request' === $eventName) {
-            $this->stopwatch->startSection();
-        } elseif ('kernel.view' === $eventName || 'kernel.response' === $eventName) {
-            // stop only if a controller has been executed
-            try {
-                $this->stopwatch->stop('controller');
-            } catch (\LogicException $e) {
-            }
+        switch ($eventName) {
+            case 'kernel.request':
+                $this->stopwatch->openSection();
+                break;
+            case 'kernel.view':
+            case 'kernel.response':
+                // stop only if a controller has been executed
+                try {
+                    $this->stopwatch->stop('controller');
+                } catch (\LogicException $e) {
+                }
+                break;
+            case 'kernel.terminate':
+                $token = $event->getResponse()->headers->get('X-Debug-Token');
+                $this->stopwatch->openSection($token);
+                break;
         }
 
         $e1 = $this->stopwatch->start($eventName, 'section');
@@ -65,14 +73,19 @@ class TraceableEventDispatcher extends ContainerAwareEventDispatcher implements 
 
         $e1->stop();
 
-        if ('kernel.controller' === $eventName) {
-            $this->stopwatch->start('controller', 'section');
-        } elseif ('kernel.response' === $eventName) {
-            $token = $event->getResponse()->headers->get('X-Debug-Token');
-
-            $this->stopwatch->stopSection($token);
-
-            $this->updateProfile($token);
+        switch ($eventName) {
+            case 'kernel.controller':
+                $this->stopwatch->start('controller', 'section');
+                break;
+            case 'kernel.response':
+                $token = $event->getResponse()->headers->get('X-Debug-Token');
+                $this->stopwatch->stopSection($token);
+                $this->updateProfile($token);
+                break;
+            case 'kernel.terminate':
+                $this->stopwatch->stopSection($token);
+                $this->updateProfile($token);
+                break;
         }
     }
 
@@ -84,18 +97,10 @@ class TraceableEventDispatcher extends ContainerAwareEventDispatcher implements 
     public function addListener($eventName, $listener, $priority = 0)
     {
         if (!is_callable($listener)) {
-            if (is_string($listener)) {
-                $typeDefinition = '[string] '.$listener;
-            } elseif (is_array($listener)) {
-                $typeDefinition = '[array] '.(is_object($listener[0]) ? get_class($listener[0]) : $listener[0]).'::'.$listener[1];
-            } elseif (is_object($listener)) {
-                $typeDefinition = '[object] '.get_class($listener);
-            } else {
-                $typeDefinition = '[?] '.var_export($listener, true);
-            }
-
-            throw new \RuntimeException(sprintf('The given callback (%s) for event "%s" is not callable.', $typeDefinition, $eventName));
+            throw new \RuntimeException(sprintf('The given callback (%s) for event "%s" is not callable.', $this->getListenerAsString($listener), $eventName));
         }
+
+        $this->priorities[$eventName.'_'.$this->getListenerAsString($listener)] = $priority;
 
         parent::addListener($eventName, $listener, $priority);
     }
@@ -114,7 +119,7 @@ class TraceableEventDispatcher extends ContainerAwareEventDispatcher implements 
 
             $this->called[$eventName.'.'.$info['pretty']] = $info;
 
-            $e2 = $this->stopwatch->start(substr($info['class'], strrpos($info['class'], '\\') + 1), 'event_listener');
+            $e2 = $this->stopwatch->start(isset($info['class']) ? substr($info['class'], strrpos($info['class'], '\\') + 1) : $info['type'], 'event_listener');
 
             call_user_func($listener, $event);
 
@@ -129,18 +134,8 @@ class TraceableEventDispatcher extends ContainerAwareEventDispatcher implements 
 
                     foreach ($skippedListeners as $skippedListener) {
                         if ($skipped) {
-                            if (is_object($skippedListener)) {
-                                $typeDefinition = get_class($skippedListener);
-                            } elseif (is_array($skippedListener)) {
-                                if (is_object($skippedListener[0])) {
-                                    $typeDefinition = get_class($skippedListener[0]);
-                                } else {
-                                    $typeDefinition = implode('::', $skippedListener);
-                                }
-                            } else {
-                                $typeDefinition = $skippedListener;
-                            }
-                            $this->logger->debug(sprintf('Listener "%s" was not called for event "%s".', $typeDefinition, $eventName));
+                            $info = $this->getListenerInfo($skippedListener, $eventName);
+                            $this->logger->debug(sprintf('Listener "%s" was not called for event "%s".', $info['pretty'], $eventName));
                         }
 
                         if ($skippedListener === $listener) {
@@ -203,7 +198,10 @@ class TraceableEventDispatcher extends ContainerAwareEventDispatcher implements 
      */
     private function getListenerInfo($listener, $eventName)
     {
-        $info = array('event' => $eventName);
+        $info = array(
+            'event'    => $eventName,
+            'priority' => $this->priorities[$eventName.'_'.$this->getListenerAsString($listener)],
+        );
         if ($listener instanceof \Closure) {
             $info += array(
                 'type' => 'Closure',
@@ -251,6 +249,11 @@ class TraceableEventDispatcher extends ContainerAwareEventDispatcher implements 
         return $info;
     }
 
+    /**
+     * Updates the profile data.
+     *
+     * @param string $token Profile token
+     */
     private function updateProfile($token)
     {
         if (!$this->getContainer()->has('profiler')) {
@@ -262,7 +265,7 @@ class TraceableEventDispatcher extends ContainerAwareEventDispatcher implements 
             return;
         }
 
-        $profile->getCollector('time')->setEvents($this->stopwatch->getSectionEvents($profile->getToken()));
+        $profile->getCollector('time')->setEvents($this->stopwatch->getSectionEvents($token));
         $profiler->saveProfile($profile);
 
         // children
@@ -270,5 +273,18 @@ class TraceableEventDispatcher extends ContainerAwareEventDispatcher implements 
             $child->getCollector('time')->setEvents($this->stopwatch->getSectionEvents($child->getToken()));
             $profiler->saveProfile($child);
         }
+    }
+
+    private function getListenerAsString($listener)
+    {
+        if (is_string($listener)) {
+            return '[string] '.$listener;
+        } elseif (is_array($listener)) {
+            return '[array] '.(is_object($listener[0]) ? get_class($listener[0]) : $listener[0]).'::'.$listener[1];
+        } elseif (is_object($listener)) {
+            return '[object] '.get_class($listener);
+        }
+
+        return '[?] '.var_export($listener, true);
     }
 }

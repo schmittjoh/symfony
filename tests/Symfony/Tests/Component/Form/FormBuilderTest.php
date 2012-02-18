@@ -11,7 +11,6 @@
 
 namespace Symfony\Tests\Component\Form;
 
-use Symfony\Component\Form\FormFactory;
 use Symfony\Component\Form\FormBuilder;
 use Symfony\Component\Form\Guess\Guess;
 
@@ -35,6 +34,37 @@ class FormBuilderTest extends \PHPUnit_Framework_TestCase
         $this->dispatcher = null;
         $this->factory = null;
         $this->builder = null;
+    }
+
+    public function getHtml4Ids()
+    {
+        // The full list is tested in FormTest, since both Form and FormBuilder
+        // use the same implementation internally
+        return array(
+            array('#', false),
+            array('a ', false),
+            array("a\t", false),
+            array("a\n", false),
+            array('a.', false),
+        );
+    }
+
+    /**
+     * @dataProvider getHtml4Ids
+     */
+    public function testConstructAcceptsOnlyNamesValidAsIdsInHtml4($name, $accepted)
+    {
+        try {
+            new FormBuilder($name, $this->factory, $this->dispatcher);
+            if (!$accepted) {
+                $this->fail(sprintf('The value "%s" should not be accepted', $name));
+            }
+        } catch (\InvalidArgumentException $e) {
+            // if the value was not accepted, but should be, rethrow exception
+            if ($accepted) {
+                throw $e;
+            }
+        }
     }
 
     /**
@@ -148,6 +178,45 @@ class FormBuilderTest extends \PHPUnit_Framework_TestCase
         $builder = $this->builder->get($expectedName);
 
         $this->assertNotSame($builder, $this->builder);
+    }
+
+    public function testGetParent()
+    {
+        $this->assertNull($this->builder->getParent());
+    }
+
+    public function testGetParentForAddedBuilder()
+    {
+        $builder = new FormBuilder('name', $this->factory, $this->dispatcher);
+        $this->builder->add($builder);
+        $this->assertSame($this->builder, $builder->getParent());
+    }
+
+    public function testGetParentForRemovedBuilder()
+    {
+        $builder = new FormBuilder('name', $this->factory, $this->dispatcher);
+        $this->builder->add($builder);
+        $this->builder->remove('name');
+        $this->assertNull($builder->getParent());
+    }
+
+    public function testGetParentForCreatedBuilder()
+    {
+        $this->builder = new FormBuilder('name', $this->factory, $this->dispatcher, 'stdClass');
+        $this->factory
+            ->expects($this->once())
+                ->method('createNamedBuilder')
+                ->with('text', 'bar', null, array(), $this->builder)
+        ;
+
+        $this->factory
+            ->expects($this->once())
+                ->method('createBuilderForProperty')
+                ->with('stdClass', 'foo', null, array(), $this->builder)
+        ;
+
+        $this->builder->create('foo');
+        $this->builder->create('bar', 'text');
     }
 
     private function getFormBuilder()

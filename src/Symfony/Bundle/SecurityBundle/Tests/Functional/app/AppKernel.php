@@ -30,8 +30,8 @@ while ($dir !== $lastDir) {
     $dir = dirname($dir);
 }
 
-use Symfony\Component\HttpKernel\Util\Filesystem;
 use Symfony\Component\Config\Loader\LoaderInterface;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpKernel\Kernel;
 
 /**
@@ -80,12 +80,12 @@ class AppKernel extends Kernel
 
     public function getCacheDir()
     {
-        return sys_get_temp_dir().'/'.$this->testCase.'/cache/'.$this->environment;
+        return sys_get_temp_dir().'/'.Kernel::VERSION.'/'.$this->testCase.'/cache/'.$this->environment;
     }
 
     public function getLogDir()
     {
-        return sys_get_temp_dir().'/'.$this->testCase.'/logs';
+        return sys_get_temp_dir().'/'.Kernel::VERSION.'/'.$this->testCase.'/logs';
     }
 
     public function registerContainerConfiguration(LoaderInterface $loader)

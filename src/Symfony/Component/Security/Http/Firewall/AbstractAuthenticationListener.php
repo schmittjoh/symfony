@@ -151,26 +151,26 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
                 $this->sessionStrategy->onAuthentication($request, $returnValue);
 
                 if (null !== $this->logger) {
-                    $this->logger->info(sprintf('User "%s" has been authenticated successfully', $returnValue));
+                	$this->logger->info(sprintf('User "%s" has been authenticated successfully', $token->getUsername()));
                 }
-
-                $this->securityContext->setToken($returnValue);
-
+                
+                $this->securityContext->setToken($token);
+                
                 $session = $request->getSession();
                 $session->remove(SecurityContextInterface::AUTHENTICATION_ERROR);
                 $session->remove(SecurityContextInterface::LAST_USERNAME);
-
+                
                 if (null !== $this->dispatcher) {
-                    $loginEvent = new InteractiveLoginEvent($request, $returnValue);
-                    $this->dispatcher->dispatch(SecurityEvents::INTERACTIVE_LOGIN, $loginEvent);
+                	$loginEvent = new InteractiveLoginEvent($request, $token);
+                	$this->dispatcher->dispatch(SecurityEvents::INTERACTIVE_LOGIN, $loginEvent);
                 }
-
-                $response = $this->successHandler->onAuthenticationSuccess($request, $returnValue);
-
+                
+                $response = $this->successHandler->onAuthenticationSuccess($request, $token);
+                
                 if (null !== $this->rememberMeServices) {
-                    $this->rememberMeServices->loginSuccess($request, $response, $returnValue);
+                	$this->rememberMeServices->loginSuccess($request, $response, $token);
                 }
-            } else if ($returnValue instanceof Response) {
+            } elseif ($returnValue instanceof Response) {
                 $response = $returnValue;
             } else {
                 throw new \RuntimeException('attemptAuthentication() must either return a Response, an implementation of TokenInterface, or null.');

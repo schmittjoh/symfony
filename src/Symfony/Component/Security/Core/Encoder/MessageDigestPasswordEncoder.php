@@ -22,6 +22,7 @@ class MessageDigestPasswordEncoder extends BasePasswordEncoder
 {
     private $algorithm;
     private $encodeHashAsBase64;
+    private $iterations;
 
     /**
      * Constructor.

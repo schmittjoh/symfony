@@ -11,7 +11,6 @@
 
 namespace Symfony\Component\Validator;
 
-use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Mapping\ClassMetadataFactoryInterface;
 
 /**
@@ -109,7 +108,7 @@ class Validator implements ValidatorInterface
             return $walker->walkConstraint($constraint, $value, $group, '');
         };
 
-        return $this->validateGraph($value, $walk, $groups);
+        return $this->validateGraph('', $walk, $groups);
     }
 
     protected function validateGraph($root, \Closure $walk, $groups = null)

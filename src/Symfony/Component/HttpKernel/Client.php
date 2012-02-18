@@ -19,6 +19,7 @@ use Symfony\Component\BrowserKit\Response as DomResponse;
 use Symfony\Component\BrowserKit\Cookie as DomCookie;
 use Symfony\Component\BrowserKit\History;
 use Symfony\Component\BrowserKit\CookieJar;
+use Symfony\Component\HttpKernel\TerminableInterface;
 
 /**
  * Client simulates a browser and makes requests to a Kernel object.
@@ -57,7 +58,13 @@ class Client extends BaseClient
      */
     protected function doRequest($request)
     {
-        return $this->kernel->handle($request);
+        $response = $this->kernel->handle($request);
+
+        if ($this->kernel instanceof TerminableInterface) {
+            $this->kernel->terminate($request, $response);
+        }
+
+        return $response;
     }
 
     /**
@@ -169,7 +176,7 @@ EOF;
             foreach ($response->headers->getCookies() as $cookie) {
                 $cookies[] = new DomCookie($cookie->getName(), $cookie->getValue(), $cookie->getExpiresTime(), $cookie->getPath(), $cookie->getDomain(), $cookie->isSecure(), $cookie->isHttpOnly());
             }
-            $headers['Set-Cookie'] = implode(', ', $cookies);
+            $headers['Set-Cookie'] = $cookies;
         }
 
         return new DomResponse($response->getContent(), $response->getStatusCode(), $headers);

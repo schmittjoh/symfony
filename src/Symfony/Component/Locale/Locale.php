@@ -35,7 +35,9 @@ class Locale extends \Locale
      * Returns the country names for a locale
      *
      * @param  string $locale     The locale to use for the country names
+     *
      * @return array              The country names with their codes as keys
+     *
      * @throws RuntimeException   When the resource bundles cannot be loaded
      */
     static public function getDisplayCountries($locale)
@@ -57,6 +59,11 @@ class Locale extends \Locale
                 if (ctype_alpha($code) && 'ZZ' !== $code) {
                     $countries[$code] = $name;
                 }
+            }
+
+            $fallbackLocale = self::getFallbackLocale($locale);
+            if (null !== $fallbackLocale) {
+                $countries = array_merge(self::getDisplayCountries($fallbackLocale), $countries);
             }
 
             $collator->asort($countries);
@@ -82,7 +89,9 @@ class Locale extends \Locale
      * Returns the language names for a locale
      *
      * @param  string $locale     The locale to use for the language names
+     *
      * @return array              The language names with their codes as keys
+     *
      * @throws RuntimeException   When the resource bundles cannot be loaded
      */
     static public function getDisplayLanguages($locale)
@@ -102,6 +111,11 @@ class Locale extends \Locale
                 if ('mul' !== $code) {
                     $languages[$code] = $name;
                 }
+            }
+
+            $fallbackLocale = self::getFallbackLocale($locale);
+            if (null !== $fallbackLocale) {
+                $languages = array_merge(self::getDisplayLanguages($fallbackLocale), $languages);
             }
 
             $collator->asort($languages);
@@ -144,6 +158,11 @@ class Locale extends \Locale
 
             foreach ($bundle->get('Locales') as $code => $name) {
                 $locales[$code] = $name;
+            }
+
+            $fallbackLocale = self::getFallbackLocale($locale);
+            if (null !== $fallbackLocale) {
+                $locales = array_merge(self::getDisplayLocales($fallbackLocale), $locales);
             }
 
             $collator->asort($locales);
@@ -213,5 +232,24 @@ class Locale extends \Locale
         preg_match('/^ICU Data version (?:=>)?(.*)$/m', $output, $matches);
 
         return trim($matches[1]);
+    }
+
+    /**
+     * Returns the fallback locale for a given locale, if any
+     *
+     * @param $locale             The locale to find the fallback for
+     * @return string|null        The fallback locale, or null if no parent exists
+     */
+    static protected function getFallbackLocale($locale)
+    {
+        if ($locale === self::getDefault()) {
+            return null;
+        }
+
+        if (false === $pos = strrpos($locale, '_')) {
+            return self::getDefault();
+        }
+
+        return substr($locale, 0, $pos);
     }
 }

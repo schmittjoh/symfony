@@ -13,9 +13,7 @@ namespace Symfony\Bundle\FrameworkBundle\DependencyInjection;
 
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\DefinitionDecorator;
-use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\Config\Resource\FileResource;
@@ -58,7 +56,7 @@ class FrameworkExtension extends Extension
             $container->setAlias('debug.controller_resolver', 'controller_resolver');
         }
 
-        $configuration = new Configuration($container->getParameter('kernel.debug'));
+        $configuration = $this->getConfiguration($configs, $container);
         $config = $this->processConfiguration($configuration, $configs);
 
         if (isset($config['charset'])) {
@@ -148,6 +146,11 @@ class FrameworkExtension extends Extension
         ));
     }
 
+    public function getConfiguration(array $config, ContainerBuilder $container)
+    {
+        return new Configuration($container->getParameter('kernel.debug'));
+    }
+
     /**
      * Loads Form configuration.
      *
@@ -199,12 +202,14 @@ class FrameworkExtension extends Extension
 
         // Choose storage class based on the DSN
         $supported = array(
-            'sqlite'  => 'Symfony\Component\HttpKernel\Profiler\SqliteProfilerStorage',
-            'mysql'   => 'Symfony\Component\HttpKernel\Profiler\MysqlProfilerStorage',
-            'file'    => 'Symfony\Component\HttpKernel\Profiler\FileProfilerStorage',
-            'mongodb' => 'Symfony\Component\HttpKernel\Profiler\MongoDbProfilerStorage',
+            'sqlite'    => 'Symfony\Component\HttpKernel\Profiler\SqliteProfilerStorage',
+            'mysql'     => 'Symfony\Component\HttpKernel\Profiler\MysqlProfilerStorage',
+            'file'      => 'Symfony\Component\HttpKernel\Profiler\FileProfilerStorage',
+            'mongodb'   => 'Symfony\Component\HttpKernel\Profiler\MongoDbProfilerStorage',
+            'memcache'  => 'Symfony\Component\HttpKernel\Profiler\MemcacheProfilerStorage',
+            'memcached' => 'Symfony\Component\HttpKernel\Profiler\MemcachedProfilerStorage',
         );
-        list($class, ) = explode(':', $config['dsn']);
+        list($class, ) = explode(':', $config['dsn'], 2);
         if (!isset($supported[$class])) {
             throw new \LogicException(sprintf('Driver "%s" is not supported for the profiler.', $class));
         }
@@ -289,7 +294,7 @@ class FrameworkExtension extends Extension
         // session storage
         $container->setAlias('session.storage', $config['storage_id']);
         $options = array();
-        foreach (array('name', 'lifetime', 'path', 'domain', 'secure', 'httponly') as $key) {
+        foreach (array('name', 'lifetime', 'path', 'domain', 'secure', 'httponly', 'auto_start') as $key) {
             if (isset($config[$key])) {
                 $options[$key] = $config[$key];
             }
@@ -298,7 +303,8 @@ class FrameworkExtension extends Extension
 
         $this->addClassesToCompile(array(
             'Symfony\\Bundle\\FrameworkBundle\\EventListener\\SessionListener',
-            'Symfony\\Component\\HttpFoundation\\SessionStorage\\SessionStorageInterface',
+            'Symfony\\Component\\HttpFoundation\\Session\\Storage\\SessionStorageInterface',
+            'Symfony\\Component\\HttpFoundation\\Session\\Storage\\AbstractSessionStorage',
             $container->getDefinition('session')->getClass(),
         ));
 
@@ -329,6 +335,7 @@ class FrameworkExtension extends Extension
 
         $container->setParameter('templating.helper.code.file_link_format', isset($links[$ide]) ? $links[$ide] : $ide);
         $container->setParameter('templating.helper.form.resources', $config['form']['resources']);
+        $container->setParameter('templating.hinclude.default_template', $config['hinclude_default_template']);
 
         if ($container->getParameter('kernel.debug')) {
             $loader->load('templating_debug.xml');
@@ -386,6 +393,7 @@ class FrameworkExtension extends Extension
         $this->addClassesToCompile(array(
             'Symfony\\Bundle\\FrameworkBundle\\Templating\\GlobalVariables',
             'Symfony\\Bundle\\FrameworkBundle\\Templating\\EngineInterface',
+            'Symfony\\Component\\Templating\\StreamingEngineInterface',
             'Symfony\\Component\\Templating\\TemplateNameParserInterface',
             'Symfony\\Component\\Templating\\TemplateNameParser',
             'Symfony\\Component\\Templating\\EngineInterface',
@@ -521,7 +529,7 @@ class FrameworkExtension extends Extension
                 })->in($dirs);
                 foreach ($finder as $file) {
                     // filename is domain.locale.format
-                    list($domain, $locale, $format) = explode('.', $file->getBasename());
+                    list($domain, $locale, $format) = explode('.', $file->getBasename(), 3);
 
                     $translator->addMethodCall('addResource', array($format, (string) $file, $locale, $domain));
                 }
@@ -562,7 +570,8 @@ class FrameworkExtension extends Extension
 
     private function getValidatorXmlMappingFiles(ContainerBuilder $container)
     {
-        $files = array(__DIR__.'/../../../Component/Form/Resources/config/validation.xml');
+        $reflClass = new \ReflectionClass('Symfony\Component\Form\FormInterface');
+        $files = array(dirname($reflClass->getFileName()).'/Resources/config/validation.xml');
         $container->addResource(new FileResource($files[0]));
 
         foreach ($container->getParameter('kernel.bundles') as $bundle) {

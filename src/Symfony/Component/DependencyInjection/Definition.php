@@ -11,6 +11,9 @@
 
 namespace Symfony\Component\DependencyInjection;
 
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Exception\OutOfBoundsException;
+
 /**
  * Definition represents a service definition.
  *
@@ -245,7 +248,7 @@ class Definition
     public function replaceArgument($index, $argument)
     {
         if ($index < 0 || $index > count($this->arguments) - 1) {
-            throw new \OutOfBoundsException(sprintf('The index "%d" is not in the range [0, %d].', $index, count($this->arguments) - 1));
+            throw new OutOfBoundsException(sprintf('The index "%d" is not in the range [0, %d].', $index, count($this->arguments) - 1));
         }
 
         $this->arguments[$index] = $argument;
@@ -277,7 +280,7 @@ class Definition
     public function getArgument($index)
     {
         if ($index < 0 || $index > count($this->arguments) - 1) {
-            throw new \OutOfBoundsException(sprintf('The index "%d" is not in the range [0, %d].', $index, count($this->arguments) - 1));
+            throw new OutOfBoundsException(sprintf('The index "%d" is not in the range [0, %d].', $index, count($this->arguments) - 1));
         }
 
         return $this->arguments[$index];
@@ -310,10 +313,15 @@ class Definition
      *
      * @return Definition The current instance
      *
+     * @throws InvalidArgumentException on empty $method param
+     *
      * @api
      */
     public function addMethodCall($method, array $arguments = array())
     {
+        if (empty($method)) {
+            throw new InvalidArgumentException(sprintf('Method name cannot be empty.'));
+        }
         $this->calls[] = array($method, $arguments);
 
         return $this;
@@ -519,6 +527,7 @@ class Definition
      * Sets the visibility of this service.
      *
      * @param Boolean $boolean
+     *
      * @return Definition The current instance
      *
      * @api

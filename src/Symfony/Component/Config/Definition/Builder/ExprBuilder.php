@@ -35,7 +35,7 @@ class ExprBuilder
     }
 
     /**
-     * Mark the expression as being always used.
+     * Marks the expression as being always used.
      *
      * @return ExprBuilder
      */
@@ -56,6 +56,7 @@ class ExprBuilder
      * The default one tests if the value is true.
      *
      * @param \Closure $closure
+     *
      * @return ExprBuilder
      */
     public function ifTrue(\Closure $closure = null)

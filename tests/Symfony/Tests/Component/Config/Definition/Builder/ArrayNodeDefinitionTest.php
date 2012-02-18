@@ -28,8 +28,40 @@ class ArrayNodeDefinitionTest extends \PHPUnit_Framework_TestCase
             ->end()
             ->append($child);
 
-        $this->assertEquals(count($this->getField($parent, 'children')), 3);
+        $this->assertCount(3, $this->getField($parent, 'children'));
         $this->assertTrue(in_array($child, $this->getField($parent, 'children')));
+    }
+
+    /**
+     * @expectedException Symfony\Component\Config\Definition\Exception\InvalidDefinitionException
+     * @dataProvider providePrototypeNodeSpecificCalls
+     */
+    public function testPrototypeNodeSpecificOption($method, $args)
+    {
+        $node = new ArrayNodeDefinition('root');
+
+        call_user_func_array(array($node, $method), $args);
+
+        $node->getNode();
+    }
+
+    public function providePrototypeNodeSpecificCalls()
+    {
+        return array(
+            array('defaultValue', array(array())),
+            array('requiresAtLeastOneElement', array()),
+            array('useAttributeAsKey', array('foo'))
+        );
+    }
+
+    /**
+     * @expectedException Symfony\Component\Config\Definition\Exception\InvalidDefinitionException
+     */
+    public function testConcreteNodeSpecificOption()
+    {
+        $node = new ArrayNodeDefinition('root');
+        $node->addDefaultsIfNotSet()->prototype('array');
+        $node->getNode();
     }
 
     protected function getField($object, $field)

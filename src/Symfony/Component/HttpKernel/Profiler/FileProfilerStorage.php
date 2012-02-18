@@ -46,7 +46,7 @@ class FileProfilerStorage implements ProfilerStorageInterface
     /**
      * {@inheritdoc}
      */
-    public function find($ip, $url, $limit)
+    public function find($ip, $url, $limit, $method)
     {
         $file = $this->getIndexFilename();
 
@@ -66,31 +66,30 @@ class FileProfilerStorage implements ProfilerStorageInterface
                 break;
             }
 
-            if ($line === "") {
+            if ($line === '') {
                 continue;
             }
 
-            list($csvToken, $csvIp, $csvUrl, $csvTime, $csvParent) = str_getcsv($line);
+            list($csvToken, $csvIp, $csvMethod, $csvUrl, $csvTime, $csvParent) = str_getcsv($line);
 
-            if ($ip && false === strpos($csvIp, $ip) || $url && false === strpos($csvUrl, $url)) {
+            if ($ip && false === strpos($csvIp, $ip) || $url && false === strpos($csvUrl, $url) || $method && false === strpos($csvMethod, $method)) {
                 continue;
             }
 
-            $row = array(
+            $result[$csvToken] = array(
                 'token'  => $csvToken,
                 'ip'     => $csvIp,
+                'method' => $csvMethod,
                 'url'    => $csvUrl,
                 'time'   => $csvTime,
                 'parent' => $csvParent,
             );
-
-            $result[] = $row;
-            $limit--;
+            --$limit;
         }
 
         fclose($file);
 
-        return $result;
+        return array_values($result);
     }
 
     /**
@@ -139,10 +138,11 @@ class FileProfilerStorage implements ProfilerStorageInterface
         // Store profile
         $data = array(
             'token'    => $profile->getToken(),
-            'parent'   => $profile->getParent() ? $profile->getParent()->getToken() : null,
+            'parent'   => $profile->getParentToken(),
             'children' => array_map(function ($p) { return $p->getToken(); }, $profile->getChildren()),
             'data'     => $profile->getCollectors(),
             'ip'       => $profile->getIp(),
+            'method'   => $profile->getMethod(),
             'url'      => $profile->getUrl(),
             'time'     => $profile->getTime(),
         );
@@ -159,9 +159,10 @@ class FileProfilerStorage implements ProfilerStorageInterface
         fputcsv($file, array(
             $profile->getToken(),
             $profile->getIp(),
+            $profile->getMethod(),
             $profile->getUrl(),
             $profile->getTime(),
-            $profile->getParent() ? $profile->getParent()->getToken() : null,
+            $profile->getParentToken(),
         ));
         fclose($file);
 
@@ -219,7 +220,7 @@ class FileProfilerStorage implements ProfilerStorageInterface
                 break;
             }
 
-            $str = $char . $str;
+            $str = $char.$str;
 
             if (ftell($file) === 1) {
                 // All file is read, so we move cursor to the position 0
@@ -237,6 +238,7 @@ class FileProfilerStorage implements ProfilerStorageInterface
     {
         $profile = new Profile($token);
         $profile->setIp($data['ip']);
+        $profile->setMethod($data['method']);
         $profile->setUrl($data['url']);
         $profile->setTime($data['time']);
         $profile->setCollectors($data['data']);

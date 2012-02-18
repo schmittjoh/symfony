@@ -68,6 +68,16 @@ class Command
     }
 
     /**
+     * Ignores validation errors.
+     *
+     * This is mainly useful for the help command.
+     */
+    public function ignoreValidationErrors()
+    {
+        $this->ignoreValidationErrors = true;
+    }
+
+    /**
      * Sets the application instance for this command.
      *
      * @param Application $application An Application instance
@@ -269,7 +279,7 @@ class Command
     /**
      * Sets an array of argument and option instances.
      *
-     * @param array|Definition $definition An array of argument and option instances or a definition instance
+     * @param array|InputDefinition $definition An array of argument and option instances or a definition instance
      *
      * @return Command The current instance
      *

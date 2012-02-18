@@ -13,6 +13,10 @@ namespace Symfony\Bundle\FrameworkBundle\Templating\Helper;
 
 use Symfony\Component\Templating\Helper\Helper;
 
+if (!defined('ENT_SUBSTITUTE')) {
+    define('ENT_SUBSTITUTE', 8);
+}
+
 /**
  * CodeHelper.
  *
@@ -22,17 +26,20 @@ class CodeHelper extends Helper
 {
     protected $fileLinkFormat;
     protected $rootDir;
+    protected $charset;
 
     /**
      * Constructor.
      *
      * @param string $fileLinkFormat The format for links to source files
      * @param string $rootDir        The project root directory
+     * @param string $charset        The charset
      */
-    public function __construct($fileLinkFormat, $rootDir)
+    public function __construct($fileLinkFormat, $rootDir, $charset)
     {
         $this->fileLinkFormat = empty($fileLinkFormat) ? ini_get('xdebug.file_link_format') : $fileLinkFormat;
         $this->rootDir = str_replace('\\', '/', $rootDir).'/';
+        $this->charset = $charset;
     }
 
     /**
@@ -44,28 +51,7 @@ class CodeHelper extends Helper
      */
     public function formatArgsAsText(array $args)
     {
-        $result = array();
-        foreach ($args as $key => $item) {
-            if ('object' === $item[0]) {
-                $formattedValue = sprintf("object(%s)", $item[1]);
-            } elseif ('array' === $item[0]) {
-                $formattedValue = sprintf("array(%s)", is_array($item[1]) ? $this->formatArgsAsText($item[1]) : $item[1]);
-            } elseif ('string'  === $item[0]) {
-                $formattedValue = sprintf("'%s'", $item[1]);
-            } elseif ('null' === $item[0]) {
-                $formattedValue = 'null';
-            } elseif ('boolean' === $item[0]) {
-                $formattedValue = strtolower(var_export($item[1], true));
-            } elseif ('resource' === $item[0]) {
-                $formattedValue = 'resource';
-            } else {
-                $formattedValue = str_replace("\n", '', var_export((string) $item[1], true));
-            }
-
-            $result[] = is_int($key) ? $formattedValue : sprintf("'%s' => %s", $key, $formattedValue);
-        }
-
-        return implode(', ', $result);
+        return strip_tags($this->formatArgs($args));
     }
 
     public function abbrClass($class)
@@ -79,9 +65,9 @@ class CodeHelper extends Helper
     public function abbrMethod($method)
     {
         if (false !== strpos($method, '::')) {
-            list($class, $method) = explode('::', $method);
+            list($class, $method) = explode('::', $method, 2);
             $result = sprintf("%s::%s()", $this->abbrClass($class), $method);
-        } else if ('Closure' === $method) {
+        } elseif ('Closure' === $method) {
             $result = sprintf("<abbr title=\"%s\">%s</abbr>", $method, $method);
         } else {
             $result = sprintf("<abbr title=\"%s\">%s</abbr>()", $method, $method);
@@ -173,7 +159,7 @@ class CodeHelper extends Helper
         }
 
         if (false !== $link = $this->getFileLink($file, $line)) {
-            return sprintf('<a href="%s" title="Click to open this file" class="file_link">%s</a>', $link, $text);
+            return sprintf('<a href="%s" title="Click to open this file" class="file_link">%s</a>', htmlspecialchars($link, ENT_QUOTES | ENT_SUBSTITUTE, $this->charset), $text);
         }
 
         return $text;

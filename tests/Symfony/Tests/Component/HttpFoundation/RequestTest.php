@@ -12,10 +12,8 @@
 namespace Symfony\Tests\Component\HttpFoundation;
 
 
-use Symfony\Component\HttpFoundation\SessionStorage\ArraySessionStorage;
-
-use Symfony\Component\HttpFoundation\Session;
-
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Request;
 
 class RequestTest extends \PHPUnit_Framework_TestCase
@@ -59,6 +57,22 @@ class RequestTest extends \PHPUnit_Framework_TestCase
     public function testCreate()
     {
         $request = Request::create('http://test.com/foo?bar=baz');
+        $this->assertEquals('http://test.com/foo?bar=baz', $request->getUri());
+        $this->assertEquals('/foo', $request->getPathInfo());
+        $this->assertEquals('bar=baz', $request->getQueryString());
+        $this->assertEquals(80, $request->getPort());
+        $this->assertEquals('test.com', $request->getHttpHost());
+        $this->assertFalse($request->isSecure());
+
+        $request = Request::create('http://test.com/foo', 'GET', array('bar' => 'baz'));
+        $this->assertEquals('http://test.com/foo?bar=baz', $request->getUri());
+        $this->assertEquals('/foo', $request->getPathInfo());
+        $this->assertEquals('bar=baz', $request->getQueryString());
+        $this->assertEquals(80, $request->getPort());
+        $this->assertEquals('test.com', $request->getHttpHost());
+        $this->assertFalse($request->isSecure());
+
+        $request = Request::create('http://test.com/foo?bar=foo', 'GET', array('bar' => 'baz'));
         $this->assertEquals('http://test.com/foo?bar=baz', $request->getUri());
         $this->assertEquals('/foo', $request->getPathInfo());
         $this->assertEquals('bar=baz', $request->getQueryString());
@@ -544,6 +558,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
             array('88.88.88.88', true, '127.0.0.1', null, '88.88.88.88'),
             array('::1', false, '::1', null, null),
             array('2620:0:1cfe:face:b00c::3', true, '::1', '2620:0:1cfe:face:b00c::3', null),
+            array('2620:0:1cfe:face:b00c::3', true, '::1', null, '2620:0:1cfe:face:b00c::3, ::1'),
+            array('88.88.88.88', true, '123.45.67.89', null, '88.88.88.88, 87.65.43.21, 127.0.0.1'),
         );
     }
 
@@ -583,7 +599,19 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function testCreateFromGlobals()
+    public function provideOverloadedMethods()
+    {
+        return array(
+            array('PUT'),
+            array('DELETE'),
+            array('PATCH'),
+        );
+    }
+
+    /**
+     * @dataProvider provideOverloadedMethods
+     */
+    public function testCreateFromGlobals($method)
     {
         $_GET['foo1']    = 'bar1';
         $_POST['foo2']   = 'bar2';
@@ -600,19 +628,19 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 
         unset($_GET['foo1'], $_POST['foo2'], $_COOKIE['foo3'], $_FILES['foo4'], $_SERVER['foo5']);
 
-        $_SERVER['REQUEST_METHOD'] = 'PUT';
+        $_SERVER['REQUEST_METHOD'] = $method;
         $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
         $request = RequestContentProxy::createFromGlobals();
-        $this->assertEquals('PUT', $request->getMethod());
+        $this->assertEquals($method, $request->getMethod());
         $this->assertEquals('mycontent', $request->request->get('content'));
 
         unset($_SERVER['REQUEST_METHOD'], $_SERVER['CONTENT_TYPE']);
 
-        $_POST['_method']   = 'PUT';
+        $_POST['_method']   = $method;
         $_POST['foo6']      = 'bar6';
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $request = Request::createFromGlobals();
-        $this->assertEquals('PUT', $request->getMethod());
+        $this->assertEquals($method, $request->getMethod());
         $this->assertEquals('bar6', $request->request->get('foo6'));
 
         unset($_POST['_method'], $_POST['foo6'], $_SERVER['REQUEST_METHOD']);
@@ -735,7 +763,8 @@ class RequestTest extends \PHPUnit_Framework_TestCase
     public function testGetPreferredLanguage()
     {
         $request = new Request();
-        $this->assertEquals('', $request->getPreferredLanguage());
+        $this->assertNull($request->getPreferredLanguage());
+        $this->assertNull($request->getPreferredLanguage(array()));
         $this->assertEquals('fr', $request->getPreferredLanguage(array('fr')));
         $this->assertEquals('fr', $request->getPreferredLanguage(array('fr', 'en')));
         $this->assertEquals('en', $request->getPreferredLanguage(array('en', 'fr')));
@@ -833,7 +862,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $request = new Request;
 
         $this->assertFalse($request->hasSession());
-        $request->setSession(new Session(new ArraySessionStorage()));
+        $request->setSession(new Session(new MockArraySessionStorage()));
         $this->assertTrue($request->hasSession());
     }
 
@@ -844,7 +873,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($request->hasPreviousSession());
         $request->cookies->set(session_name(), 'foo');
         $this->assertFalse($request->hasPreviousSession());
-        $request->setSession(new Session(new ArraySessionStorage()));
+        $request->setSession(new Session(new MockArraySessionStorage()));
         $this->assertTrue($request->hasPreviousSession());
     }
 

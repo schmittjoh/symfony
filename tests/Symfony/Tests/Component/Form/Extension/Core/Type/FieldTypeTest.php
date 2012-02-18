@@ -70,11 +70,11 @@ class FieldTypeTest extends TypeTestCase
         $this->assertTrue($form->isRequired());
     }
 
-    public function testPassReadOnlyAsOption()
+    public function testPassDisabledAsOption()
     {
-        $form = $this->factory->create('field', null, array('read_only' => true));
+        $form = $this->factory->create('field', null, array('disabled' => true));
 
-        $this->assertTrue($form->isReadOnly());
+        $this->assertTrue($form->isDisabled());
     }
 
     public function testBoundDataIsTrimmedBeforeTransforming()
@@ -117,6 +117,16 @@ class FieldTypeTest extends TypeTestCase
         $this->assertEquals('name', $view->get('full_name'));
     }
 
+    public function testStripLeadingUnderscoresAndDigitsFromId()
+    {
+        $form = $this->factory->createNamed('field', '_09name');
+        $view = $form->createView();
+
+        $this->assertEquals('name', $view->get('id'));
+        $this->assertEquals('_09name', $view->get('name'));
+        $this->assertEquals('_09name', $view->get('full_name'));
+    }
+
     public function testPassIdAndNameToViewWithParent()
     {
         $parent = $this->factory->createNamed('field', 'parent');
@@ -138,6 +148,33 @@ class FieldTypeTest extends TypeTestCase
         $this->assertEquals('parent_child_grand_child', $view['child']['grand_child']->get('id'));
         $this->assertEquals('grand_child', $view['child']['grand_child']->get('name'));
         $this->assertEquals('parent[child][grand_child]', $view['child']['grand_child']->get('full_name'));
+    }
+
+    public function testNonReadOnlyFieldWithReadOnlyParentBeingReadOnly()
+    {
+        $parent = $this->factory->createNamed('field', 'parent', null, array('read_only' => true));
+        $child  = $this->factory->createNamed('field', 'child');
+        $view   = $parent->add($child)->createView();
+
+        $this->assertTrue($view['child']->get('read_only'));
+    }
+
+    public function testReadOnlyFieldWithNonReadOnlyParentBeingReadOnly()
+    {
+        $parent = $this->factory->createNamed('field', 'parent');
+        $child  = $this->factory->createNamed('field', 'child', null, array('read_only' => true));
+        $view   = $parent->add($child)->createView();
+
+        $this->assertTrue($view['child']->get('read_only'));
+    }
+
+    public function testNonReadOnlyFieldWithNonReadOnlyParentBeingNonReadOnly()
+    {
+        $parent = $this->factory->createNamed('field', 'parent');
+        $child  = $this->factory->createNamed('field', 'child');
+        $view   = $parent->add($child)->createView();
+
+        $this->assertFalse($view['child']->get('read_only'));
     }
 
     public function testPassMaxLengthToView()
@@ -168,16 +205,86 @@ class FieldTypeTest extends TypeTestCase
     {
         $form = $this->factory->create('form', null, array(
             'data_class' => 'Symfony\Tests\Component\Form\Fixtures\Author',
+            'required' => false,
+        ));
+        $form->add($this->factory->createNamed('field', 'firstName'));
+        $form->add($this->factory->createNamed('field', 'lastName'));
+
+        $form->setData(null);
+        // partially empty, still an object is created
+        $form->bind(array('firstName' => 'Bernhard', 'lastName' => ''));
+
+        $author = new Author();
+        $author->firstName = 'Bernhard';
+        $author->setLastName('');
+
+        $this->assertEquals($author, $form->getData());
+    }
+
+    public function testBindWithEmptyDataCreatesObjectIfInitiallyBoundWithObject()
+    {
+        $form = $this->factory->create('form', null, array(
+            // data class is inferred from the passed object
+            'data' => new Author(),
+            'required' => false,
+        ));
+        $form->add($this->factory->createNamed('field', 'firstName'));
+        $form->add($this->factory->createNamed('field', 'lastName'));
+
+        $form->setData(null);
+        // partially empty, still an object is created
+        $form->bind(array('firstName' => 'Bernhard', 'lastName' => ''));
+
+        $author = new Author();
+        $author->firstName = 'Bernhard';
+        $author->setLastName('');
+
+        $this->assertEquals($author, $form->getData());
+    }
+
+    public function testBindWithEmptyDataDoesNotCreateObjectIfDataClassIsNull()
+    {
+        $form = $this->factory->create('form', null, array(
+            'data' => new Author(),
+            'data_class' => null,
+            'required' => false,
         ));
         $form->add($this->factory->createNamed('field', 'firstName'));
 
         $form->setData(null);
         $form->bind(array('firstName' => 'Bernhard'));
 
-        $author = new Author();
-        $author->firstName = 'Bernhard';
+        $this->assertSame(array('firstName' => 'Bernhard'), $form->getData());
+    }
 
-        $this->assertEquals($author, $form->getData());
+    public function testBindEmptyWithEmptyDataCreatesNoObjectIfNotRequired()
+    {
+        $form = $this->factory->create('form', null, array(
+            'data_class' => 'Symfony\Tests\Component\Form\Fixtures\Author',
+            'required' => false,
+        ));
+        $form->add($this->factory->createNamed('field', 'firstName'));
+        $form->add($this->factory->createNamed('field', 'lastName'));
+
+        $form->setData(null);
+        $form->bind(array('firstName' => '', 'lastName' => ''));
+
+        $this->assertNull($form->getData());
+    }
+
+    public function testBindEmptyWithEmptyDataCreatesObjectIfRequired()
+    {
+        $form = $this->factory->create('form', null, array(
+            'data_class' => 'Symfony\Tests\Component\Form\Fixtures\Author',
+            'required' => true,
+        ));
+        $form->add($this->factory->createNamed('field', 'firstName'));
+        $form->add($this->factory->createNamed('field', 'lastName'));
+
+        $form->setData(null);
+        $form->bind(array('firstName' => '', 'lastName' => ''));
+
+        $this->assertEquals(new Author(), $form->getData());
     }
 
     /*
@@ -213,7 +320,7 @@ class FieldTypeTest extends TypeTestCase
     {
         $form = $this->factory->create('field', null, array('attr' => array()));
 
-        $this->assertEquals(0, count($form->getAttribute('attr')));
+        $this->assertCount(0, $form->getAttribute('attr'));
     }
 
     /**
@@ -254,4 +361,10 @@ class FieldTypeTest extends TypeTestCase
         $form = $this->factory->create('field', null, array('attr' => ''));
     }
 
+    public function testNameCanBeEmptyString()
+    {
+        $form = $this->factory->createNamed('field', '');
+
+        $this->assertEquals('', $form->getName());
+    }
 }

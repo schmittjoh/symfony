@@ -237,6 +237,9 @@ class DateTimeTypeTest extends LocalizedTestCase
     {
         $form = $this->factory->create('datetime', null, array(
             'invalid_message' => 'Customized invalid message',
+            // Only possible with the "text" widget, because the "choice"
+            // widget automatically fields invalid values
+            'widget' => 'text',
         ));
 
         $form->bind(array(
@@ -254,5 +257,13 @@ class DateTimeTypeTest extends LocalizedTestCase
         $this->assertFalse($form->isValid());
         $this->assertEquals(array(new FormError('Customized invalid message', array())), $form['date']->getErrors());
         $this->assertEquals(array(new FormError('Customized invalid message', array())), $form['time']->getErrors());
+    }
+
+    // Bug fix
+    public function testInitializeWithDateTime()
+    {
+        // Throws an exception if "data_class" option is not explicitely set
+        // to null in the type
+        $this->factory->create('datetime', new \DateTime());
     }
 }

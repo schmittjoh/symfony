@@ -19,7 +19,8 @@ use Symfony\Component\Form\Exception\UnexpectedTypeException;
 class PropertyPathMapper implements DataMapperInterface
 {
     /**
-     * Stores the class that the data of this form must be instances of
+     * Stores the class that the data of this form must be instances of.
+     *
      * @var string
      */
     private $dataClass;
@@ -30,7 +31,6 @@ class PropertyPathMapper implements DataMapperInterface
     }
 
     /**
-     *
      * @param dataClass $data
      * @param array $forms
      *
@@ -59,7 +59,7 @@ class PropertyPathMapper implements DataMapperInterface
     public function mapDataToForm($data, FormInterface $form)
     {
         if (!empty($data)) {
-            if ($form->getAttribute('property_path') !== null) {
+            if (null !== $form->getAttribute('property_path')) {
                 $form->setData($form->getAttribute('property_path')->getValue($data));
             }
         }
@@ -77,7 +77,7 @@ class PropertyPathMapper implements DataMapperInterface
 
     public function mapFormToData(FormInterface $form, &$data)
     {
-        if ($form->getAttribute('property_path') !== null && $form->isSynchronized()) {
+        if (null !== $form->getAttribute('property_path') && $form->isSynchronized()) {
             $propertyPath = $form->getAttribute('property_path');
 
             // If the data is identical to the value in $data, we are

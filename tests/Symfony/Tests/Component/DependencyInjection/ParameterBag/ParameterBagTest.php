@@ -94,6 +94,7 @@ class ParameterBagTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(array('bar' => array('bar' => array('bar' => 'bar'))), $bag->resolveValue(array('%foo%' => array('%foo%' => array('%foo%' => '%foo%')))), '->resolveValue() replaces placeholders in nested arrays');
         $this->assertEquals('I\'m a %%foo%%', $bag->resolveValue('I\'m a %%foo%%'), '->resolveValue() supports % escaping by doubling it');
         $this->assertEquals('I\'m a bar %%foo bar', $bag->resolveValue('I\'m a %foo% %%foo %foo%'), '->resolveValue() supports % escaping by doubling it');
+        $this->assertEquals(array('foo' => array('bar' => array('ding' => 'I\'m a bar %%foo %%bar'))), $bag->resolveValue(array('foo' => array('bar' => array('ding' => 'I\'m a bar %%foo %%bar')))), '->resolveValue() supports % escaping by doubling it');
 
         $bag = new ParameterBag(array('foo' => true));
         $this->assertTrue($bag->resolveValue('%foo%'), '->resolveValue() replaces arguments that are just a placeholder by their value without casting them to strings');
@@ -163,5 +164,46 @@ class ParameterBagTest extends \PHPUnit_Framework_TestCase
         } catch (ParameterNotFoundException $e) {
             $this->assertEquals('The parameter "foo" has a dependency on a non-existent parameter "bar".', $e->getMessage());
         }
+    }
+
+    /**
+     * @covers Symfony\Component\DependencyInjection\ParameterBag\ParameterBag::resolve
+     */
+    public function testResolveUnespacesValue()
+    {
+        $bag = new ParameterBag(array(
+            'foo' => array('bar' => array('ding' => 'I\'m a bar %%foo %%bar')),
+            'bar' => 'I\'m a %%foo%%',
+        ));
+
+        $bag->resolve();
+
+        $this->assertEquals('I\'m a %foo%', $bag->get('bar'), '->resolveValue() supports % escaping by doubling it');
+        $this->assertEquals(array('bar' => array('ding' => 'I\'m a bar %foo %bar')), $bag->get('foo'), '->resolveValue() supports % escaping by doubling it');
+    }
+
+    /**
+     * @covers Symfony\Component\DependencyInjection\ParameterBag\ParameterBag::resolve
+     * @dataProvider stringsWithSpacesProvider
+     */
+    public function testResolveStringWithSpacesReturnsString($expected, $test, $description)
+    {
+        $bag = new ParameterBag(array('foo' => 'bar'));
+
+        try {
+            $this->assertEquals($expected, $bag->resolveString($test), $description);
+        } catch (ParameterNotFoundException $e) {
+            $this->fail(sprintf('%s - "%s"', $description, $expected));
+        }
+    }
+
+    public function stringsWithSpacesProvider()
+    {
+        return array(
+            array('bar', '%foo%', 'Parameters must be wrapped by %.'),
+            array('% foo %', '% foo %', 'Parameters should not have spaces.'),
+            array('{% set my_template = "foo" %}', '{% set my_template = "foo" %}', 'Twig-like strings are not parameters.'),
+            array('50% is less than 100%', '50% is less than 100%', 'Text between % signs is allowed, if there are spaces.'),
+        );
     }
 }

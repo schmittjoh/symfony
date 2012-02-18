@@ -51,6 +51,16 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     }
 
     /**
+     * Retrieves the children of this node.
+     *
+     * @return array The children
+     */
+    public function getChildren()
+    {
+        return $this->children;
+    }
+
+    /**
      * Sets the xml remappings that should be performed.
      *
      * @param array $remappings an array of the form array(array(string, string))
@@ -72,8 +82,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     }
 
     /**
-     * Sets whether false is allowed as value indicating that the array should
-     * be unset.
+     * Sets whether false is allowed as value indicating that the array should be unset.
      *
      * @param Boolean $allow
      */
@@ -136,6 +145,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * Retrieves the default value.
      *
      * @return array The default value
+     *
      * @throws \RuntimeException if the node has no default value
      */
     public function getDefaultValue()
@@ -158,6 +168,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * Adds a child node.
      *
      * @param NodeInterface $node The child node to add
+     *
      * @throws \InvalidArgumentException when the child node has no name
      * @throws \InvalidArgumentException when the child node's name is not unique
      */
@@ -178,7 +189,9 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * Finalizes the value of this node.
      *
      * @param mixed $value
+     *
      * @return mixed The finalised value
+     *
      * @throws UnsetKeyException
      * @throws InvalidConfigurationException if the node doesn't have enough children
      */
@@ -220,6 +233,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * Validates the type of the value.
      *
      * @param mixed $value
+     *
      * @throws InvalidTypeException
      */
     protected function validateType($value)
@@ -240,6 +254,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * Normalizes the value.
      *
      * @param mixed $value The value to normalize
+     *
      * @return mixed The normalized value
      */
     protected function normalizeValue($value)
@@ -271,9 +286,10 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     }
 
     /**
-     * Remap multiple singular values to a single plural value
+     * Remaps multiple singular values to a single plural value.
      *
      * @param array $value The source values
+     *
      * @return array The remapped values
      */
     protected function remapXml($value)
@@ -297,7 +313,9 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      *
      * @param mixed $leftSide The left side to merge.
      * @param mixed $rightSide The right side to merge.
+     *
      * @return mixed The merged values
+     *
      * @throws InvalidConfigurationException
      * @throws \RuntimeException
      */

@@ -18,16 +18,21 @@
     ],
     "require": {
         "php": ">=5.3.2",
-        "symfony/event-dispatcher": ">=2.1",
-        "symfony/http-kernel": ">=2.1",
-        "symfony/routing": ">=2.1",
-        "symfony/templating": ">=2.1",
-        "symfony/translator": ">=2.1"
+        "symfony/dependency-injection" : "self.version",
+        "symfony/config" : "self.version",
+        "symfony/event-dispatcher": "self.version",
+        "symfony/http-kernel": "self.version",
+        "symfony/filesystem": "self.version",
+        "symfony/routing": "self.version",
+        "symfony/templating": "self.version",
+        "symfony/translation": "self.version",
+        "doctrine/common": ">=2.1,<2.3-dev"
     },
     "recommend": {
-        "symfony/console": ">=2.1",
-        "symfony/form": ">=2.1",
-        "symfony/validator": ">=2.1"
+        "symfony/console": "self.version",
+        "symfony/finder": "self.version",
+        "symfony/form": "self.version",
+        "symfony/validator": "self.version"
     },
     "autoload": {
         "psr-0": { "Symfony\\Bundle\\FrameworkBundle": "" }

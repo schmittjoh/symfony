@@ -60,6 +60,62 @@ class FormTest extends \PHPUnit_Framework_TestCase
         new Form('name', $this->dispatcher, array(), array(), array(), null, $validators);
     }
 
+    public function getHtml4Ids()
+    {
+        return array(
+            array('a0', true),
+            array('a9', true),
+            array('z0', true),
+            array('A0', true),
+            array('A9', true),
+            array('Z0', true),
+            array('#', false),
+            array('a#', false),
+            array('a$', false),
+            array('a%', false),
+            array('a ', false),
+            array("a\t", false),
+            array("a\n", false),
+            array('a-', true),
+            array('a_', true),
+            array('a:', true),
+            // Periods are allowed by the HTML4 spec, but disallowed by us
+            // because they break the generated property paths
+            array('a.', false),
+            // Contrary to the HTML4 spec, we allow names starting with a
+            // number, otherwise naming fields by collection indices is not
+            // possible.
+            // For root forms, leading digits will be stripped from the
+            // "id" attribute to produce valid HTML4.
+            array('0', true),
+            array('9', true),
+            // Contrary to the HTML4 spec, we allow names starting with an
+            // underscore, since this is already a widely used practice in
+            // Symfony2.
+            // For root forms, leading underscores will be stripped from the
+            // "id" attribute to produce valid HTML4.
+            array('_', true),
+        );
+    }
+
+    /**
+     * @dataProvider getHtml4Ids
+     */
+    public function testConstructAcceptsOnlyNamesValidAsIdsInHtml4($name, $accepted)
+    {
+        try {
+            new Form($name, $this->dispatcher);
+            if (!$accepted) {
+                $this->fail(sprintf('The value "%s" should not be accepted', $name));
+            }
+        } catch (\InvalidArgumentException $e) {
+            // if the value was not accepted, but should be, rethrow exception
+            if ($accepted) {
+                throw $e;
+            }
+        }
+    }
+
     public function testDataIsInitializedEmpty()
     {
         $norm = new FixedDataTransformer(array(
@@ -143,6 +199,15 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(array('firstName' => 'Bernhard'), $this->form->getData());
     }
 
+    /**
+     * @expectedException Symfony\Component\Form\Exception\AlreadyBoundException
+     */
+    public function testBindThrowsExceptionIfAlreadyBound()
+    {
+        $this->form->bind(array());
+        $this->form->bind(array());
+    }
+
     public function testBindForwardsNullIfValueIsMissing()
     {
         $child = $this->getMockForm('firstName');
@@ -156,10 +221,10 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->form->bind(array());
     }
 
-    public function testBindIsIgnoredIfReadOnly()
+    public function testBindIsIgnoredIfDisabled()
     {
         $form = $this->getBuilder()
-            ->setReadOnly(true)
+            ->setDisabled(true)
             ->setData('initial')
             ->getForm();
 
@@ -199,34 +264,34 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($child->isRequired());
     }
 
-    public function testAlwaysReadOnlyIfParentReadOnly()
+    public function testAlwaysDisabledIfParentDisabled()
     {
-        $parent = $this->getBuilder()->setReadOnly(true)->getForm();
-        $child = $this->getBuilder()->setReadOnly(false)->getForm();
+        $parent = $this->getBuilder()->setDisabled(true)->getForm();
+        $child = $this->getBuilder()->setDisabled(false)->getForm();
 
         $child->setParent($parent);
 
-        $this->assertTrue($child->isReadOnly());
+        $this->assertTrue($child->isDisabled());
     }
 
-    public function testReadOnly()
+    public function testDisabled()
     {
-        $parent = $this->getBuilder()->setReadOnly(false)->getForm();
-        $child = $this->getBuilder()->setReadOnly(true)->getForm();
+        $parent = $this->getBuilder()->setDisabled(false)->getForm();
+        $child = $this->getBuilder()->setDisabled(true)->getForm();
 
         $child->setParent($parent);
 
-        $this->assertTrue($child->isReadOnly());
+        $this->assertTrue($child->isDisabled());
     }
 
-    public function testNotReadOnly()
+    public function testNotDisabled()
     {
-        $parent = $this->getBuilder()->setReadOnly(false)->getForm();
-        $child = $this->getBuilder()->setReadOnly(false)->getForm();
+        $parent = $this->getBuilder()->setDisabled(false)->getForm();
+        $child = $this->getBuilder()->setDisabled(false)->getForm();
 
         $child->setParent($parent);
 
-        $this->assertFalse($child->isReadOnly());
+        $this->assertFalse($child->isDisabled());
     }
 
     public function testCloneChildren()
@@ -305,15 +370,15 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->form->isValid());
     }
 
-    public function testValidIfBoundAndReadOnly()
+    public function testValidIfBoundAndDisabled()
     {
-        $form = $this->getBuilder()->setReadOnly(true)->getForm();
+        $form = $this->getBuilder()->setDisabled(true)->getForm();
         $form->bind('foobar');
 
         $this->assertTrue($form->isValid());
     }
 
-    public function testValidIfBoundAndReadOnlyWithChildren()
+    public function testValidIfBoundAndDisabledWithChildren()
     {
         $this->factory->expects($this->once())
             ->method('createNamedBuilder')
@@ -321,7 +386,7 @@ class FormTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue($this->getBuilder('name')));
 
         $form = $this->getBuilder('person')
-            ->setReadOnly(true)
+            ->setDisabled(true)
             ->add('name', 'text')
             ->getForm();
         $form->bind(array('name' => 'Jacques Doe'));
@@ -352,8 +417,8 @@ class FormTest extends \PHPUnit_Framework_TestCase
             ->method('isValid')
             ->will($this->returnValue(false));
 
-        $this->form->bind('foobar');
         $this->form->add($child);
+        $this->form->bind(array());
 
         $this->assertFalse($this->form->isValid());
     }
@@ -382,6 +447,15 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($this->form->hasChildren());
     }
 
+    /**
+     * @expectedException Symfony\Component\Form\Exception\AlreadyBoundException
+     */
+    public function testSetParentThrowsExceptionIfAlreadyBound()
+    {
+        $this->form->bind(array());
+        $this->form->setParent($this->getBuilder('parent')->getForm());
+    }
+
     public function testAdd()
     {
         $child = $this->getBuilder('foo')->getForm();
@@ -389,6 +463,15 @@ class FormTest extends \PHPUnit_Framework_TestCase
 
         $this->assertSame($this->form, $child->getParent());
         $this->assertSame(array('foo' => $child), $this->form->getChildren());
+    }
+
+    /**
+     * @expectedException Symfony\Component\Form\Exception\AlreadyBoundException
+     */
+    public function testAddThrowsExceptionIfAlreadyBound()
+    {
+        $this->form->bind(array());
+        $this->form->add($this->getBuilder('foo')->getForm());
     }
 
     public function testRemove()
@@ -399,6 +482,16 @@ class FormTest extends \PHPUnit_Framework_TestCase
 
         $this->assertNull($child->getParent());
         $this->assertFalse($this->form->hasChildren());
+    }
+
+    /**
+     * @expectedException Symfony\Component\Form\Exception\AlreadyBoundException
+     */
+    public function testRemoveThrowsExceptionIfAlreadyBound()
+    {
+        $this->form->add($this->getBuilder('foo')->getForm());
+        $this->form->bind(array('foo' => 'bar'));
+        $this->form->remove('foo');
     }
 
     public function testRemoveIgnoresUnknownName()
@@ -425,7 +518,7 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $this->form->add($this->getBuilder('foo')->getForm());
         $this->form->add($this->getBuilder('bar')->getForm());
 
-        $this->assertEquals(2, count($this->form));
+        $this->assertCount(2, $this->form);
     }
 
     public function testIterator()
@@ -446,6 +539,15 @@ class FormTest extends \PHPUnit_Framework_TestCase
     public function testNotBound()
     {
         $this->assertFalse($this->form->isBound());
+    }
+
+    /**
+     * @expectedException Symfony\Component\Form\Exception\AlreadyBoundException
+     */
+    public function testSetDataThrowsExceptionIfAlreadyBound()
+    {
+        $this->form->bind(array());
+        $this->form->setData(null);
     }
 
     public function testSetDataExecutesTransformationChain()
@@ -822,6 +924,8 @@ class FormTest extends \PHPUnit_Framework_TestCase
         return array(
             array('POST'),
             array('PUT'),
+            array('DELETE'),
+            array('PATCH'),
         );
     }
 
@@ -868,6 +972,106 @@ class FormTest extends \PHPUnit_Framework_TestCase
         unlink($path);
     }
 
+    /**
+     * @dataProvider requestMethodProvider
+     */
+    public function testBindPostOrPutRequestWithEmptyRootFormName($method)
+    {
+        $path = tempnam(sys_get_temp_dir(), 'sf2');
+        touch($path);
+
+        $values = array(
+            'name' => 'Bernhard',
+            'extra' => 'data',
+        );
+
+        $files = array(
+            'image' => array(
+                'error' => UPLOAD_ERR_OK,
+                'name' => 'upload.png',
+                'size' => 123,
+                'tmp_name' => $path,
+                'type' => 'image/png',
+            ),
+        );
+
+        $request = new Request(array(), $values, array(), array(), $files, array(
+            'REQUEST_METHOD' => $method,
+        ));
+
+        $form = $this->getBuilder('')->getForm();
+        $form->add($this->getBuilder('name')->getForm());
+        $form->add($this->getBuilder('image')->getForm());
+
+        $form->bindRequest($request);
+
+        $file = new UploadedFile($path, 'upload.png', 'image/png', 123, UPLOAD_ERR_OK);
+
+        $this->assertEquals('Bernhard', $form['name']->getData());
+        $this->assertEquals($file, $form['image']->getData());
+        $this->assertEquals(array('extra' => 'data'), $form->getExtraData());
+
+        unlink($path);
+    }
+
+    /**
+     * @dataProvider requestMethodProvider
+     */
+    public function testBindPostOrPutRequestWithSingleFieldForm($method)
+    {
+        $path = tempnam(sys_get_temp_dir(), 'sf2');
+        touch($path);
+
+        $files = array(
+            'image' => array(
+                'error' => UPLOAD_ERR_OK,
+                'name' => 'upload.png',
+                'size' => 123,
+                'tmp_name' => $path,
+                'type' => 'image/png',
+            ),
+        );
+
+        $request = new Request(array(), array(), array(), array(), $files, array(
+            'REQUEST_METHOD' => $method,
+        ));
+
+        $form = $this->getBuilder('image')->getForm();
+
+        $form->bindRequest($request);
+
+        $file = new UploadedFile($path, 'upload.png', 'image/png', 123, UPLOAD_ERR_OK);
+
+        $this->assertEquals($file, $form->getData());
+
+        unlink($path);
+    }
+
+    /**
+     * @dataProvider requestMethodProvider
+     */
+    public function testBindPostOrPutRequestWithSingleFieldFormUploadedFile($method)
+    {
+        $path = tempnam(sys_get_temp_dir(), 'sf2');
+        touch($path);
+
+        $values = array(
+            'name' => 'Bernhard',
+        );
+
+        $request = new Request(array(), $values, array(), array(), array(), array(
+            'REQUEST_METHOD' => $method,
+        ));
+
+        $form = $this->getBuilder('name')->getForm();
+
+        $form->bindRequest($request);
+
+        $this->assertEquals('Bernhard', $form->getData());
+
+        unlink($path);
+    }
+
     public function testBindGetRequest()
     {
         $values = array(
@@ -889,6 +1093,29 @@ class FormTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals('Bernhard', $form['firstName']->getData());
         $this->assertEquals('Schussek', $form['lastName']->getData());
+    }
+
+    public function testBindGetRequestWithEmptyRootFormName()
+    {
+        $values = array(
+            'firstName' => 'Bernhard',
+            'lastName' => 'Schussek',
+            'extra' => 'data'
+        );
+
+        $request = new Request($values, array(), array(), array(), array(), array(
+            'REQUEST_METHOD' => 'GET',
+        ));
+
+        $form = $this->getBuilder('')->getForm();
+        $form->add($this->getBuilder('firstName')->getForm());
+        $form->add($this->getBuilder('lastName')->getForm());
+
+        $form->bindRequest($request);
+
+        $this->assertEquals('Bernhard', $form['firstName']->getData());
+        $this->assertEquals('Schussek', $form['lastName']->getData());
+        $this->assertEquals(array('extra' => 'data'), $form->getExtraData());
     }
 
     public function testBindResetsErrors()
@@ -1022,6 +1249,34 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $parent->add($this->getBuilder('foo')->getForm());
 
         $this->assertEquals("name:\n    ERROR: Error!\nfoo:\n    No errors\n", $parent->getErrorsAsString());
+    }
+
+    public function testFormCanHaveEmptyName()
+    {
+        $form = $this->getBuilder('')->getForm();
+
+        $this->assertEquals('', $form->getName());
+    }
+
+    /**
+     * @expectedException Symfony\Component\Form\Exception\FormException
+     * @expectedExceptionMessage Form with empty name can not have parent form.
+     */
+    public function testFormCannotHaveEmptyNameNotInRootLevel()
+    {
+        $parent = $this->getBuilder()
+            ->add($this->getBuilder(''))
+            ->getForm();
+    }
+
+    public function testGetValidatorsReturnsValidators()
+    {
+        $validator = $this->getFormValidator();
+        $form = $this->getBuilder()
+            ->addValidator($validator)
+            ->getForm();
+
+        $this->assertEquals(array($validator), $form->getValidators());
     }
 
     protected function getBuilder($name = 'name', EventDispatcherInterface $dispatcher = null)

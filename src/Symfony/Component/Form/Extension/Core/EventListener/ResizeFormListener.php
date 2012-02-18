@@ -28,29 +28,29 @@ class ResizeFormListener implements EventSubscriberInterface
     /**
      * @var FormFactoryInterface
      */
-    private $factory;
+    protected $factory;
 
     /**
      * @var string
      */
-    private $type;
+    protected $type;
 
     /**
      * @var array
      */
-    private $options;
+    protected $options;
 
     /**
      * Whether children could be added to the group
      * @var Boolean
      */
-    private $allowAdd;
+    protected $allowAdd;
 
     /**
      * Whether children could be removed from the group
      * @var Boolean
      */
-    private $allowDelete;
+    protected $allowDelete;
 
     public function __construct(FormFactoryInterface $factory, $type, array $options = array(), $allowAdd = false, $allowDelete = false)
     {
@@ -66,7 +66,8 @@ class ResizeFormListener implements EventSubscriberInterface
         return array(
             FormEvents::PRE_SET_DATA => 'preSetData',
             FormEvents::PRE_BIND => 'preBind',
-            FormEvents::BIND_NORM_DATA => 'onBindNormData',
+            // (MergeCollectionListener, MergeDoctrineCollectionListener)
+            FormEvents::BIND_NORM_DATA => array('onBindNormData', 50),
         );
     }
 

@@ -33,7 +33,7 @@ use Symfony\Component\Serializer\Exception\RuntimeException;
  *
  * @author Nils Adermann <naderman@naderman.de>
  */
-class GetSetMethodNormalizer extends SerializerAwareNormalizer
+class GetSetMethodNormalizer extends SerializerAwareNormalizer implements NormalizerInterface, DenormalizerInterface
 {
     /**
      * {@inheritdoc}
@@ -46,7 +46,7 @@ class GetSetMethodNormalizer extends SerializerAwareNormalizer
         $attributes = array();
         foreach ($reflectionMethods as $method) {
             if ($this->isGetMethod($method)) {
-                $attributeName = strtolower(substr($method->getName(), 3));
+                $attributeName = lcfirst(substr($method->getName(), 3));
 
                 $attributeValue = $method->invoke($object);
                 if (null !== $attributeValue && !is_scalar($attributeValue)) {
@@ -73,13 +73,13 @@ class GetSetMethodNormalizer extends SerializerAwareNormalizer
 
             $params = array();
             foreach ($constructorParameters as $constructorParameter) {
-                $paramName = strtolower($constructorParameter->getName());
+                $paramName = lcfirst($constructorParameter->getName());
 
                 if (isset($data[$paramName])) {
                     $params[] = $data[$paramName];
                     // don't run set for a parameter passed to the constructor
                     unset($data[$paramName]);
-                } else if (!$constructorParameter->isOptional()) {
+                } elseif (!$constructorParameter->isOptional()) {
                     throw new RuntimeException(
                         'Cannot create an instance of '.$class.
                         ' from serialized data because its constructor requires '.

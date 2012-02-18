@@ -36,8 +36,9 @@ class CacheClearCommand extends ContainerAwareCommand
             ->setName('cache:clear')
             ->setDefinition(array(
                 new InputOption('no-warmup', '', InputOption::VALUE_NONE, 'Do not warm up the cache'),
+                new InputOption('no-optional-warmers', '', InputOption::VALUE_NONE, 'Skip optional cache warmers (faster)'),
             ))
-            ->setDescription('Clear the cache')
+            ->setDescription('Clears the cache')
             ->setHelp(<<<EOF
 The <info>cache:clear</info> command clears the application cache for a given environment
 and debug mode:
@@ -64,12 +65,14 @@ EOF
         $kernel = $this->getContainer()->get('kernel');
         $output->writeln(sprintf('Clearing the cache for the <info>%s</info> environment with debug <info>%s</info>', $kernel->getEnvironment(), var_export($kernel->isDebug(), true)));
 
+        $this->getContainer()->get('cache_clearer')->clear($realCacheDir);
+
         if ($input->getOption('no-warmup')) {
             rename($realCacheDir, $oldCacheDir);
         } else {
             $warmupDir = $realCacheDir.'_new';
 
-            $this->warmup($warmupDir);
+            $this->warmup($warmupDir, !$input->getOption('no-optional-warmers'));
 
             rename($realCacheDir, $oldCacheDir);
             rename($warmupDir, $realCacheDir);
@@ -78,7 +81,7 @@ EOF
         $this->getContainer()->get('filesystem')->remove($oldCacheDir);
     }
 
-    protected function warmup($warmupDir)
+    protected function warmup($warmupDir, $enableOptionalWarmers = true)
     {
         $this->getContainer()->get('filesystem')->remove($warmupDir);
 
@@ -94,7 +97,11 @@ EOF
         $kernel->boot();
 
         $warmer = $kernel->getContainer()->get('cache_warmer');
-        $warmer->enableOptionalWarmers();
+
+        if ($enableOptionalWarmers) {
+            $warmer->enableOptionalWarmers();
+        }
+
         $warmer->warmUp($warmupDir);
 
         // fix container files and classes
@@ -105,7 +112,7 @@ EOF
             $content = preg_replace($regex, '', $content);
 
             // fix absolute paths to the cache directory
-            $content = preg_replace('/'.preg_quote($warmupDir,'/').'/', preg_replace('/_new$/', '', $warmupDir), $content);
+            $content = preg_replace('/'.preg_quote($warmupDir, '/').'/', preg_replace('/_new$/', '', $warmupDir), $content);
 
             file_put_contents(preg_replace($regex, '', $file), $content);
             unlink($file);

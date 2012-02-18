@@ -14,8 +14,9 @@ namespace Symfony\Bundle\FrameworkBundle\DataCollector;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollector;
-use Symfony\Component\Routing\Matcher\TraceableUrlMatcher;
-use Symfony\Component\Routing\RouterInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\RedirectController;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 
 /**
  * RouterDataCollector.
@@ -24,11 +25,17 @@ use Symfony\Component\Routing\RouterInterface;
  */
 class RouterDataCollector extends DataCollector
 {
-    private $router;
+    protected $controllers;
 
-    public function __construct(RouterInterface $router = null)
+    public function __construct()
     {
-        $this->router = $router;
+        $this->controllers = new \SplObjectStorage();
+
+        $this->data = array(
+            'redirect' => false,
+            'url'      => null,
+            'route'    => null,
+        );
     }
 
     /**
@@ -36,25 +43,55 @@ class RouterDataCollector extends DataCollector
      */
     public function collect(Request $request, Response $response, \Exception $exception = null)
     {
-        $this->data['path_info'] = $request->getPathInfo();
+        if ($response instanceof RedirectResponse) {
+            $this->data['redirect'] = true;
+            $this->data['url'] = $response->getTargetUrl();
 
-        if (!$this->router) {
-            $this->data['traces'] = array();
-        } else {
-            $matcher = new TraceableUrlMatcher($this->router->getRouteCollection(), $this->router->getContext());
+            if ($this->controllers->contains($request)) {
+                $controller = $this->controllers[$request];
+                if (is_array($controller)) {
+                    $controller = $controller[0];
+                }
 
-            $this->data['traces'] = $matcher->getTraces($request->getPathInfo());
+                if ($controller instanceof RedirectController) {
+                    $this->data['route'] = $request->attributes->get('_route', 'n/a');
+                }
+            }
         }
     }
 
-    public function getPathInfo()
+    /**
+     * Remembers the controller associated to each request.
+     *
+     * @param FilterControllerEvent The filter controller event
+     */
+    public function onKernelController(FilterControllerEvent $event)
     {
-        return $this->data['path_info'];
+        $this->controllers[$event->getRequest()] = $event->getController();
     }
 
-    public function getTraces()
+    /**
+     * @return Boolean Whether this request will result in a redirect
+     */
+    public function getRedirect()
     {
-        return $this->data['traces'];
+        return $this->data['redirect'];
+    }
+
+    /**
+     * @return string|null The target URL
+     */
+    public function getTargetUrl()
+    {
+        return $this->data['url'];
+    }
+
+    /**
+     * @return string|null The target route
+     */
+    public function getTargetRoute()
+    {
+        return $this->data['route'];
     }
 
     /**

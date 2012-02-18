@@ -78,7 +78,7 @@ abstract class FrameworkExtensionTest extends TestCase
         $this->assertTrue($container->hasDefinition('session'), '->registerSessionConfiguration() loads session.xml');
         $this->assertEquals('fr', $container->getParameter('kernel.default_locale'));
         $this->assertTrue($container->getDefinition('session_listener')->getArgument(1));
-        $this->assertEquals('session.storage.native', (string) $container->getAlias('session.storage'));
+        $this->assertEquals('session.storage.native_file', (string) $container->getAlias('session.storage'));
 
         $options = $container->getParameter('session.storage.options');
         $this->assertEquals('_SYMFONY', $options['name']);
@@ -148,7 +148,7 @@ abstract class FrameworkExtensionTest extends TestCase
         }
 
         $this->assertContains(
-            realpath(__DIR__.'/../../Resources/translations/validators.fr.xliff'),
+            realpath(__DIR__.'/../../Resources/translations/validators.fr.xlf'),
             array_map(function($resource) use ($resources) { return realpath($resource[1]); }, $resources),
             '->registerTranslatorConfiguration() finds FrameworkExtension translation resources'
         );
@@ -226,11 +226,11 @@ abstract class FrameworkExtensionTest extends TestCase
         ));
 
         $yamlArgs = $container->getParameter('validator.mapping.loader.yaml_files_loader.mapping_files');
-        $this->assertEquals(1, count($yamlArgs));
+        $this->assertCount(1, $yamlArgs);
         $this->assertStringEndsWith('TestBundle'.DIRECTORY_SEPARATOR.'Resources'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'validation.yml', $yamlArgs[0]);
 
         $xmlArgs = $container->getParameter('validator.mapping.loader.xml_files_loader.mapping_files');
-        $this->assertEquals(2, count($xmlArgs));
+        $this->assertCount(2, $xmlArgs);
         $this->assertStringEndsWith('Component/Form/Resources/config/validation.xml', $xmlArgs[0]);
         $this->assertStringEndsWith('TestBundle'.DIRECTORY_SEPARATOR.'Resources'.DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.'validation.xml', $xmlArgs[1]);
     }

@@ -21,14 +21,14 @@ class ServerBag extends ParameterBag
 {
     /**
      * Gets the HTTP headers.
-     * 
-     * @return string 
+     *
+     * @return string
      */
     public function getHeaders()
     {
         $headers = array();
         foreach ($this->parameters as $key => $value) {
-            if ('HTTP_' === substr($key, 0, 5)) {
+            if (0 === strpos($key, 'HTTP_')) {
                 $headers[substr($key, 5)] = $value;
             }
             // CONTENT_* are not prefixed with HTTP_

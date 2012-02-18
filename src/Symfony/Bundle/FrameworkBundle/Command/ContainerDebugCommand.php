@@ -183,7 +183,7 @@ EOF
      *
      * @return ContainerBuilder
      */
-    private function getContainerBuilder()
+    protected function getContainerBuilder()
     {
         if (!$this->getApplication()->getKernel()->isDebug()) {
             throw new \LogicException(sprintf('Debug information about the container is only available in debug mode.'));
@@ -206,6 +206,7 @@ EOF
      * Definition and Alias objects that those ids represent.
      *
      * @param string $serviceId The service id to resolve
+     *
      * @return \Symfony\Component\DependencyInjection\Definition|\Symfony\Component\DependencyInjection\Alias
      */
     private function resolveServiceDefinition($serviceId)

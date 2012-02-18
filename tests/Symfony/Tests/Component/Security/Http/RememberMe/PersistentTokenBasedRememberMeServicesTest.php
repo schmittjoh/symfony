@@ -19,7 +19,6 @@ use Symfony\Component\Security\Core\Util\SecureRandom;
 
 use Symfony\Component\Security\Http\RememberMe\RememberMeServicesInterface;
 use Symfony\Component\Security\Core\Authentication\Token\RememberMeToken;
-use Symfony\Component\HttpFoundation\HeaderBag;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -287,7 +286,7 @@ class PersistentTokenBasedRememberMeServicesTest extends \PHPUnit_Framework_Test
         $service->setTokenProvider($tokenProvider);
 
         $cookies = $response->headers->getCookies();
-        $this->assertEquals(0, count($cookies));
+        $this->assertCount(0, $cookies);
 
         $service->loginSuccess($request, $response, $token);
 

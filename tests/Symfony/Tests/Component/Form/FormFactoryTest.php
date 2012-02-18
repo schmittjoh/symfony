@@ -116,6 +116,7 @@ class FormFactoryTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue($builder instanceof FormBuilder);
         $this->assertEquals('bar', $builder->getName());
+        $this->assertEquals(null, $builder->getParent());
     }
 
     public function testCreateNamedBuilderCallsBuildFormMethods()
@@ -320,6 +321,15 @@ class FormFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->factory->hasType('foo'));
     }
 
+    /**
+     * @expectedException        Symfony\Component\Form\Exception\UnexpectedTypeException
+     * @expectedExceptionMessage Expected argument of type "string or Symfony\Component\Form\FormTypeInterface", "stdClass" given
+     */
+    public function testCreateNamedBuilderThrowsUnderstandableException()
+    {
+        $this->factory->createNamedBuilder(new \StdClass, 'name');
+    }
+
     public function testCreateUsesTypeNameAsName()
     {
         $type = new FooType();
@@ -475,6 +485,22 @@ class FormFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('builderInstance', $builder);
     }
 
+    public function testCreateNamedBuilderFromParentBuilder()
+    {
+        $type = new FooType();
+        $this->extension1->addType($type);
+
+        $parentBuilder = $this->getMockBuilder('Symfony\Component\Form\FormBuilder')
+            ->setConstructorArgs(array('name', $this->factory, $this->getMock('Symfony\Component\EventDispatcher\EventDispatcherInterface')))
+            ->getMock()
+        ;
+
+        $builder = $this->factory->createNamedBuilder('foo', 'bar', null, array(), $parentBuilder);
+
+        $this->assertNotEquals($builder, $builder->getParent());
+        $this->assertEquals($parentBuilder, $builder->getParent());
+    }
+
     public function testUnknownOptions()
     {
         $type = new \Symfony\Component\Form\Extension\Core\Type\TextType();
@@ -483,7 +509,7 @@ class FormFactoryTest extends \PHPUnit_Framework_TestCase
 
         $this->setExpectedException('Symfony\Component\Form\Exception\CreationException',
             'The options "invalid", "unknown" do not exist. Known options are: "data", "data_class", ' .
-            '"trim", "required", "read_only", "max_length", "pattern", "property_path", "by_reference", ' .
+            '"trim", "required", "read_only", "disabled", "max_length", "pattern", "property_path", "by_reference", ' .
             '"error_bubbling", "error_mapping", "label", "attr", "invalid_message", "invalid_message_parameters", ' .
             '"translation_domain", "empty_data"'
         );
@@ -498,7 +524,7 @@ class FormFactoryTest extends \PHPUnit_Framework_TestCase
 
         $this->setExpectedException('Symfony\Component\Form\Exception\CreationException',
             'The option "unknown" does not exist. Known options are: "data", "data_class", ' .
-            '"trim", "required", "read_only", "max_length", "pattern", "property_path", "by_reference", ' .
+            '"trim", "required", "read_only", "disabled", "max_length", "pattern", "property_path", "by_reference", ' .
             '"error_bubbling", "error_mapping", "label", "attr", "invalid_message", "invalid_message_parameters", ' .
             '"translation_domain", "empty_data"'
         );
