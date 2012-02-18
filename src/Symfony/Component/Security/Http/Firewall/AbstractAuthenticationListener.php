@@ -151,24 +151,24 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
                 $this->sessionStrategy->onAuthentication($request, $returnValue);
 
                 if (null !== $this->logger) {
-                	$this->logger->info(sprintf('User "%s" has been authenticated successfully', $token->getUsername()));
+                	$this->logger->info(sprintf('User "%s" has been authenticated successfully', $returnValue->getUsername()));
                 }
-                
-                $this->securityContext->setToken($token);
-                
+
+                $this->securityContext->setToken($returnValue);
+
                 $session = $request->getSession();
                 $session->remove(SecurityContextInterface::AUTHENTICATION_ERROR);
                 $session->remove(SecurityContextInterface::LAST_USERNAME);
-                
+
                 if (null !== $this->dispatcher) {
-                	$loginEvent = new InteractiveLoginEvent($request, $token);
+                	$loginEvent = new InteractiveLoginEvent($request, $returnValue);
                 	$this->dispatcher->dispatch(SecurityEvents::INTERACTIVE_LOGIN, $loginEvent);
                 }
-                
-                $response = $this->successHandler->onAuthenticationSuccess($request, $token);
-                
+
+                $response = $this->successHandler->onAuthenticationSuccess($request, $returnValue);
+
                 if (null !== $this->rememberMeServices) {
-                	$this->rememberMeServices->loginSuccess($request, $response, $token);
+                	$this->rememberMeServices->loginSuccess($request, $response, $returnValue);
                 }
             } elseif ($returnValue instanceof Response) {
                 $response = $returnValue;
