@@ -11,7 +11,7 @@
 
 namespace Symfony\Bridge\Doctrine\Security\User;
 
-use Doctrine\ORM\Proxy\Proxy;
+use Doctrine\Common\Persistence\Proxy;
 use Doctrine\Common\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
