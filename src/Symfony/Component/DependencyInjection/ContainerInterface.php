@@ -66,6 +66,15 @@ interface ContainerInterface
      * @api
      */
     function has($id);
+    
+    /**
+     * Returns whether the container has an instance of the given service.
+     * 
+     * @param string $id
+     * 
+     * @return Boolean
+     */
+    function hasInstance($id);
 
     /**
      * Gets a parameter.

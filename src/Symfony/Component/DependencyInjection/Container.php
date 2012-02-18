@@ -216,6 +216,11 @@ class Container implements ContainerInterface
 
         return isset($this->services[$id]) || method_exists($this, 'get'.strtr($id, array('_' => '', '.' => '_')).'Service');
     }
+    
+    public function hasInstance($id)
+    {
+    	return isset($this->services[strtolower($id)]);
+    }
 
     /**
      * Gets a service.
