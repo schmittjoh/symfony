@@ -135,37 +135,6 @@ class SecurityExtension extends Extension
         $this->configureDbalAclProvider($config, $container, $loader);
     }
 
-    private function configureExpressions($config, ContainerBuilder $container)
-    {
-        if (isset($config['expressions']['cache_dir'])) {
-            $cacheDir = $container->getParameterBag()->resolveValue($config['expressions']['cache_dir']);
-            if (!is_dir($cacheDir)) {
-                if (false === @mkdir($cacheDir, 0777, true)) {
-                    throw new  \RuntimeException(sprintf('Could not create cache directory "%s".', $cacheDir));
-                }
-            }
-
-            if (!is_writable($cacheDir)) {
-                throw new \RuntimeException(sprintf('The cache directory "%s" is not writable.', $cacheDir));
-            }
-
-            $container
-                ->getDefinition('security.expressions.voter')
-                ->addMethodCall('setCacheDir', array($cacheDir))
-            ;
-        }
-
-        if (isset($config['role_hierarchy'])) {
-            $container
-                ->getDefinition('security.expressions.variable_compiler')
-                ->addTag('security.expressions.variable', array(
-                    'variable' => 'role_hierarchy',
-                    'service'  => 'security.role_hierarchy',
-                ))
-            ;
-        }
-    }
-
     private function configureDbalAclProvider(array $config, ContainerBuilder $container, $loader)
     {
         $loader->load('security_acl_dbal.xml');
