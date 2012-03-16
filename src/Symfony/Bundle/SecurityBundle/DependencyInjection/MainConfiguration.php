@@ -90,7 +90,7 @@ class MainConfiguration implements ConfigurationInterface
             ->children()
                 ->arrayNode('acl')
                     ->children()
-                        ->scalarNode('connection')->setInfo('any name configured in doctrine.dbal section')->end()
+                        ->scalarNode('connection')->setInfo('any name configured in doctrine.dbal section')->defaultValue('default')->end()
                         ->arrayNode('cache')
                             ->addDefaultsIfNotSet()
                             ->children()

@@ -29,17 +29,17 @@ class InitSecureRandomCommand extends ContainerAwareCommand
     {
         $seed = base64_encode(hash('sha512', $input->getArgument('phrase'), true));
 
-        if ($this->container->has('security.util.secure_random_seed_provider')) {
-            $this->container->get('security.util.secure_random_seed_provider')->updateSeed($seed);
+        if ($this->getContainer()->has('security.util.secure_random_seed_provider')) {
+            $this->getContainer()->get('security.util.secure_random_seed_provider')->updateSeed($seed);
 
             $output->writeln('The CSPRNG has been initialized successfully.');
-        } else if ($this->container->has('security.util.secure_random_connection')) {
+        } else if ($this->getContainer()->has('security.util.secure_random_connection')) {
             if ($input->getOption('force') === $input->getOption('dump-sql')) {
                 throw new \InvalidArgumentException('This command needs to be run with one of these options: --force, or --dump-sql');
             }
 
-            $con = $this->container->get('security.util.secure_random_connection');
-            $schema = $this->container->get('security.util.secure_random_schema');
+            $con = $this->getContainer()->get('security.util.secure_random_connection');
+            $schema = $this->getContainer()->get('security.util.secure_random_schema');
 
             $comparator = new Comparator();
             $execute = $input->getOption('force');
@@ -51,7 +51,7 @@ class InitSecureRandomCommand extends ContainerAwareCommand
                 }
             }
 
-            $table = $this->container->getParameter('security.util.secure_random_table');
+            $table = $this->getContainer()->getParameter('security.util.secure_random_table');
             $sql = $con->getDatabasePlatform()->getTruncateTableSQL($table);
             if ($execute) {
                 $con->executeQuery($sql);
