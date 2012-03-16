@@ -15,7 +15,7 @@ UPGRADE FROM 2.0 to 2.1
 
 ### HttpFoundation
 
-  * Locate management was moved from the Session class to the Request class.
+  * Locale management was moved from the Session class to the Request class.
 
     ##### Configuring the default locale
 
@@ -112,9 +112,9 @@ UPGRADE FROM 2.0 to 2.1
         protected function load()
         {
             parent::load();
-    
+
             // load choices
-    
+
             $this->choices = $choices;
         }
     }
@@ -128,7 +128,7 @@ UPGRADE FROM 2.0 to 2.1
         public function __construct()
         {
             // load choices
-    
+
             parent::__construct($choices);
         }
     }
@@ -143,7 +143,7 @@ UPGRADE FROM 2.0 to 2.1
         protected function loadChoiceList()
         {
             // load choices
-    
+
             return new SimpleChoiceList($choices);
         }
     }
@@ -216,7 +216,7 @@ UPGRADE FROM 2.0 to 2.1
 
     ```
     $builder->add('tags', 'collection', array('prototype' => 'proto'));
-    
+
     // results in the name "$$proto$$" in the template
     ```
 
@@ -224,7 +224,7 @@ UPGRADE FROM 2.0 to 2.1
 
     ```
     $builder->add('tags', 'collection', array('prototype' => '__proto__'));
-    
+
     // results in the name "__proto__" in the template
     ```
 
@@ -244,7 +244,7 @@ UPGRADE FROM 2.0 to 2.1
             $this->setMessage($constraint->message, array(
                 '{{ value }}' => $value,
             ));
-    
+
             return false;
         }
     }
@@ -260,7 +260,7 @@ UPGRADE FROM 2.0 to 2.1
             $this->context->addViolation($constraint->message, array(
                 '{{ value }}' => $value,
             ));
-    
+
             return false;
         }
     }
@@ -295,7 +295,7 @@ UPGRADE FROM 2.0 to 2.1
     If you used these methods on bound forms, you should consider moving your
     logic to an event listener that observes one of the following events:
     `FormEvents::PRE_BIND`, `FormEvents::BIND_CLIENT_DATA` or
-    `FormEvents::BIND_NORM_DATA`. 
+    `FormEvents::BIND_NORM_DATA`.
 
 ### Session
 
@@ -331,13 +331,58 @@ UPGRADE FROM 2.0 to 2.1
         <div class="flash-{{ type }}">
             {{ flashMessage }}
         </div>
-    {% endforeach %}
+    {% endfor %}
     ```
 
-  * Session storage drivers should inherit from
-    `Symfony\Component\HttpFoundation\Session\Storage\AbstractSessionStorage`
-    and should no longer implement `read()`, `write()`, and `remove()`, which
-    were removed from `SessionStorageInterface`.
+  * Session handler drivers should implement `\SessionHandlerInterface` or extend from
+    `Symfony\Component\HttpFoudation\Session\Storage\Handler\NativeHandlerInterface` base class and renamed
+    to `Handler\FooSessionHandler`.  E.g. `PdoSessionStorage` becomes `Handler\PdoSessionHandler`.
 
-    Any session storage driver that wants to use custom save handlers should
-    implement `Symfony\Component\HttpFoundation\Session\Storage\SessionHandlerInterface`.
+  * Refactor code using `$session->*flash*()` methods to use `$session->getFlashBag()->*()`.
+
+### FrameworkBundle
+
+  * session options: lifetime, path, domain, secure, httponly were deprecated.
+    Prefixed versions should now be used instead: cookie_lifetime, cookie_path, cookie_domain, cookie_secure, cookie_httponly
+
+  Before:
+
+  ```
+    framework:
+        session:
+            lifetime:   3600
+            path:       \
+            domain:     example.com
+            secure:     true
+            httponly:   true
+  ```
+
+  After:
+
+  ```
+    framework:
+        session:
+            cookie_lifetime:   3600
+            cookie_path:       \
+            cookie_domain:     example.com
+            cookie_secure:     true
+            cookie_httponly:   true
+  ```
+
+Added `handler_id`, defaults to `session.handler.native_file`.
+
+  ```
+     framework:
+         session:
+             storage_id: session.storage.native
+             handler_id: session.handler.native_file
+  ```
+
+To use mock session storage use the following.  `handler_id` is irrelevant in this context.
+
+  ```
+     framework:
+         session:
+             storage_id: session.storage.mock_file
+  ```
+
