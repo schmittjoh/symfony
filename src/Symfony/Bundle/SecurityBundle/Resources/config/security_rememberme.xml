@@ -24,6 +24,10 @@
             <argument type="service" id="security.authentication.manager" />
             <argument type="service" id="logger" on-invalid="null" />
             <argument type="service" id="event_dispatcher" on-invalid="null"/>
+            
+            <call method="setTokenAttributeSource">
+                <argument type="service" id="security.authentication.token_attribute_source" on-invalid="ignore" />
+            </call>
         </service>
 
         <service id="security.authentication.provider.rememberme" class="%security.authentication.provider.rememberme.class%" abstract="true" public="false">

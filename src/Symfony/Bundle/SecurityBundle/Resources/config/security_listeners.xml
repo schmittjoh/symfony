@@ -40,14 +40,19 @@
         <parameter key="security.authentication.provider.pre_authenticated.class">Symfony\Component\Security\Core\Authentication\Provider\PreAuthenticatedAuthenticationProvider</parameter>
 
         <parameter key="security.authentication.provider.anonymous.class">Symfony\Component\Security\Core\Authentication\Provider\AnonymousAuthenticationProvider</parameter>
+        
+        <parameter key="security.authentication.token_attribute_source.class">Symfony\Component\Security\Http\Authentication\DefaultTokenAttributeSource</parameter>
     </parameters>
 
     <services>
+        <service id="security.authentication.token_attribute_source" class="%security.authentication.token_attribute_source.class%" public="false" />
+    
         <service id="security.authentication.listener.anonymous" class="%security.authentication.listener.anonymous.class%" public="false">
             <tag name="monolog.logger" channel="security" />
             <argument type="service" id="security.context" />
             <argument /> <!-- Key -->
             <argument type="service" id="logger" on-invalid="null" />
+            <argument type="service" id="security.authentication.token_attribute_source" on-invalid="null" />
         </service>
 
         <service id="security.authentication.provider.anonymous" class="%security.authentication.provider.anonymous.class%" public="false">
@@ -115,6 +120,10 @@
             <argument /><!-- Authentication Failure Handler -->
             <argument type="service" id="logger" on-invalid="null" />
             <argument type="service" id="event_dispatcher" on-invalid="null" />
+            
+            <call method="setTokenAttributeSource">
+                <argument type="service" id="security.authentication.token_attribute_source" on-invalid="ignore" />
+            </call>
         </service>
 
         <service id="security.authentication.listener.form"
@@ -132,6 +141,10 @@
             <argument /> <!-- x509 credentials -->
             <argument type="service" id="logger" on-invalid="null" />
             <argument type="service" id="event_dispatcher" on-invalid="null"/>
+            
+            <call method="setTokenAttributeSource">
+                <argument type="service" id="security.authentication.token_attribute_source" on-invalid="ignore" />
+            </call>
         </service>
 
         <service id="security.authentication.listener.basic" class="%security.authentication.listener.basic.class%" public="false" abstract="true">
@@ -141,6 +154,10 @@
             <argument /> <!-- Provider-shared Key -->
             <argument /> <!-- Entry Point -->
             <argument type="service" id="logger" on-invalid="null" />
+            
+            <call method="setTokenAttributeSource">
+                <argument type="service" id="security.authentication.token_attribute_source" on-invalid="ignore" />
+            </call>
         </service>
 
         <service id="security.authentication.listener.digest" class="%security.authentication.listener.digest.class%" public="false" abstract="true">
@@ -150,6 +167,10 @@
             <argument /> <!-- Provider-shared Key -->
             <argument /> <!-- Entry Point -->
             <argument type="service" id="logger" on-invalid="null" />
+            
+            <call method="setTokenAttributeSource">
+                <argument type="service" id="security.authentication.token_attribute_source" on-invalid="ignore" />
+            </call>
         </service>
 
         <service id="security.authentication.provider.dao" class="%security.authentication.provider.dao.class%" abstract="true" public="false">
@@ -187,6 +208,10 @@
             <argument>_switch_user</argument>
             <argument>ROLE_ALLOWED_TO_SWITCH</argument>
             <argument type="service" id="event_dispatcher" on-invalid="null"/>
+            
+            <call method="setTokenAttributeSource">
+                <argument type="service" id="security.authentication.token_attribute_source" on-invalid="ignore" />
+            </call>
         </service>
 
         <service id="security.access_listener" class="%security.access_listener.class%" public="false">

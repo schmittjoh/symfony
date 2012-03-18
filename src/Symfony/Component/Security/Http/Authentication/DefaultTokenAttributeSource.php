@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class TokenAttributeSource implements TokenAttributeSourceInterface
+class DefaultTokenAttributeSource implements TokenAttributeSourceInterface
 {
     /**
      * {@inheritDoc}
