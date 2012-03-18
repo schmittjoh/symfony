@@ -1,6 +1,6 @@
 <?php
 
-namespace Symfony\Component\Security\Authentication;
+namespace Symfony\Component\Security\Http\Authentication;
 
 use Symfony\Component\HttpFoundation\Request;
 
