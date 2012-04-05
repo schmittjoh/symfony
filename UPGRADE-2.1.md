@@ -309,33 +309,34 @@ UPGRADE FROM 2.0 to 2.1
     ```
     {% if app.session.hasFlash('notice') %}
         <div class="flash-notice">
-            {{ app.session.flash('notice') }}
+            {{ app.session.getFlash('notice') }}
         </div>
     {% endif %}
     ```
-
     After:
 
     ```
-    {% if app.session.flashbag.has('notice') %}
+    {% for flashMessage in app.session.flashbag.get('notice') %}
         <div class="flash-notice">
-            {{ app.session.flashbag.get('notice') }}
-        </div>
-    {% endif %}
-    ```
-
-    You can process all flash messges in a single loop with:
-
-    ```
-    {% for type, flashMessage in app.session.flashbag.all() %}
-        <div class="flash-{{ type }}">
             {{ flashMessage }}
         </div>
     {% endfor %}
     ```
 
+    You can process all flash messages in a single loop with:
+
+    ```
+    {% for type, flashMessages in app.session.flashbag.all() %}
+        {% for flashMessage in flashMessages %}
+            <div class="flash-{{ type }}">
+                {{ flashMessage }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+    ```
+
   * Session handler drivers should implement `\SessionHandlerInterface` or extend from
-    `Symfony\Component\HttpFoudation\Session\Storage\Handler\NativeHandlerInterface` base class and renamed
+    `Symfony\Component\HttpFoundation\Session\Storage\Handler\NativeHandlerInterface` base class and renamed
     to `Handler\FooSessionHandler`.  E.g. `PdoSessionStorage` becomes `Handler\PdoSessionHandler`.
 
   * Refactor code using `$session->*flash*()` methods to use `$session->getFlashBag()->*()`.

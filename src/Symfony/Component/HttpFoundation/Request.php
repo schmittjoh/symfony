@@ -528,8 +528,6 @@ class Request
     /**
      * Returns the client IP address.
      *
-     * @param  Boolean $proxy Whether the current request has been made behind a proxy or not
-     *
      * @return string The client IP address
      *
      * @api
@@ -835,7 +833,8 @@ class Request
         // Remove port number from host
         $host = preg_replace('/:\d+$/', '', $host);
 
-        return trim($host);
+        // host is lowercase as per RFC 952/2181
+        return trim(strtolower($host));
     }
 
     /**

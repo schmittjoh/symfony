@@ -34,6 +34,8 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### FrameworkBundle
 
+ * moved Symfony\Bundle\FrameworkBundle\ContainerAwareEventDispatcher to Symfony\Component\EventDispatcher\ContainerAwareEventDispatcher
+ * moved Symfony\Bundle\FrameworkBundle\Debug\TraceableEventDispatcher to Symfony\Component\EventDispatcher\ContainerAwareTraceableEventDispatcher
  * added a router:match command
  * added a config:dump-reference command
  * added kernel.event_subscriber tag
@@ -52,6 +54,12 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
    'httponly' are now prefixed with cookie_ when dumped to the container
  * Added `handler_id` configuration under `session` key to represent `session.handler`
    service, defaults to `session.handler.native_file`.
+ * Added `gc_maxlifetime`, `gc_probability`, and `gc_divisor` to session
+   configuration.This means session garbage collection has a
+  `gc_probability`/`gc_divisor` chance of being run.  The `gc_maxlifetime` means
+   how long a session can idle for which is separate from cookie lifetime which
+   defines how long a cookie can be store on the remote client.
+
 
 ### MonologBundle
 
@@ -168,9 +176,14 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * made the defaults (helper set, commands, input definition) in Application more easily customizable
  * added support for the shell even if readline is not available
  * added support for process isolation in Symfony shell via `--process-isolation` switch
+ * added support for `--`, which disables options parsing after that point (tokens will be parsed as arguments)
 
 ### ClassLoader
 
+ * added a DebugClassLoader able to wrap any autoloader providing a findFile method
+ * added a new ApcClassLoader using composition to wrap other loaders
+ * added a new ClassLoader which does not distinguish between namespaced and pear-like classes (as the PEAR
+   convention is a subset of PSR-0) and supports using Composer's namespace maps
  * added a class map generator
  * added support for loading globally-installed PEAR packages
 
@@ -212,7 +225,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * [BC BREAK] form and field names must start with a letter, digit or underscore
    and only contain letters, digits, underscores, hyphens and colons
  * [BC BREAK] changed default name of the prototype in the "collection" type
-   from "$$name$$" to "__name__". No dollars are appended/prepended to custom
+   from "$$name$$" to "\__name\__". No dollars are appended/prepended to custom
    names anymore.
  * [BC BREAK] improved ChoiceListInterface
  * [BC BREAK] added SimpleChoiceList and LazyChoiceList as replacement of
@@ -262,8 +275,8 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * added ResponseHeaderBag::makeDisposition() (implements RFC 6266)
  * made mimetype to extension conversion configurable
  * [BC BREAK] Moved all session related classes and interfaces into own namespace, as
-   `Symfony\Component\HttpFoudation\Session` and renamed classes accordingly.
-   Session handlers are located in the subnamespace `Symfony\Component\HttpFoudation\Session\Handler`.
+   `Symfony\Component\HttpFoundation\Session` and renamed classes accordingly.
+   Session handlers are located in the subnamespace `Symfony\Component\HttpFoundation\Session\Handler`.
  * SessionHandlers must implement `\SessionHandlerInterface` or extend from the
    `Symfony\Component\HttpFoundation\Storage\Handler\NativeSessionHandler` base class.
  * Added internal storage driver proxy mechanism for forward compatibility with
@@ -304,6 +317,12 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
    attributes storage behaviour from 2.0.x (default).
  * Added `Symfony\Component\HttpFoundation\Attribute\NamespacedAttributeBag` for
    namespace session attributes.
+ * Flash API can stores messages in an array so there may be multiple messages
+   per flash type.  The old `Session` class API remains without BC break as it
+   will single messages as before.
+ * Added basic session meta-data to the session to record session create time,
+   last updated time, and the lifetime of the session cookie that was provided
+   to the client.
 
 ### HttpKernel
 
@@ -329,7 +348,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
  * the UrlMatcher does not throw a \LogicException any more when the required scheme is not the current one
  * added a TraceableUrlMatcher
- * added the possibility to define default values and requirements for placeholders in prefix, including imported routes
+ * added the possibility to define options, default values and requirements for placeholders in prefix, including imported routes
  * added RouterInterface::getRouteCollection
 
 ### Security

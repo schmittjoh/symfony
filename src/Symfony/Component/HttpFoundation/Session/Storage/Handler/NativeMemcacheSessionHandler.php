@@ -12,7 +12,7 @@
 namespace Symfony\Component\HttpFoundation\Session\Storage\Handler;
 
 /**
- * NativeMemcacheSessionStorage.
+ * NativeMemcacheSessionHandler.
  *
  * Driver for the memcache session save hadlers provided by the memcache PHP extension.
  *
@@ -27,8 +27,6 @@ class NativeMemcacheSessionHandler extends NativeSessionHandler
      *
      * @param string $savePath Path of memcache server.
      * @param array  $options  Session configuration options.
-     *
-     * @see AbstractSessionStorage::__construct()
      */
     public function __construct($savePath = 'tcp://127.0.0.1:11211?persistent=0', array $options = array())
     {
@@ -47,21 +45,22 @@ class NativeMemcacheSessionHandler extends NativeSessionHandler
     }
 
     /**
-     * {@inheritdoc}
-     *
-     * Sets any values memcached ini values.
+     * Set any memcached ini values.
      *
      * @see http://php.net/memcache.ini
      */
     protected function setOptions(array $options)
     {
+        $validOptions = array_flip(array(
+            'memcache.allow_failover', 'memcache.max_failover_attempts',
+            'memcache.chunk_size', 'memcache.default_port', 'memcache.hash_strategy',
+            'memcache.hash_function', 'memcache.protocol', 'memcache.redundancy',
+            'memcache.session_redundancy', 'memcache.compress_threshold',
+            'memcache.lock_timeout',
+        ));
+
         foreach ($options as $key => $value) {
-            if (in_array($key, array(
-                'memcache.allow_failover', 'memcache.max_failover_attempts',
-                'memcache.chunk_size', 'memcache.default_port', 'memcache.hash_strategy',
-                'memcache.hash_function', 'memcache.protocol', 'memcache.redundancy',
-                'memcache.session_redundancy', 'memcache.compress_threshold',
-                'memcache.lock_timeout'))) {
+            if (isset($validOptions[$key])) {
                 ini_set($key, $value);
             }
         }

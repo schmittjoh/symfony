@@ -122,6 +122,7 @@ class FrameworkExtension extends Extension
             'Symfony\\Component\\EventDispatcher\\EventDispatcher',
             'Symfony\\Component\\EventDispatcher\\Event',
             'Symfony\\Component\\EventDispatcher\\EventSubscriberInterface',
+            'Symfony\\Component\\EventDispatcher\\ContainerAwareEventDispatcher',
 
             'Symfony\\Component\\HttpKernel\\HttpKernel',
             'Symfony\\Component\\HttpKernel\\EventListener\\ResponseListener',
@@ -141,7 +142,6 @@ class FrameworkExtension extends Extension
             'Symfony\\Bundle\\FrameworkBundle\\Controller\\ControllerResolver',
             // Cannot be included because annotations will parse the big compiled class file
             // 'Symfony\\Bundle\\FrameworkBundle\\Controller\\Controller',
-            'Symfony\\Bundle\\FrameworkBundle\\ContainerAwareEventDispatcher',
             'Symfony\\Bundle\\FrameworkBundle\\HttpKernel',
         ));
     }
@@ -295,7 +295,7 @@ class FrameworkExtension extends Extension
         // session storage
         $container->setAlias('session.storage', $config['storage_id']);
         $options = array();
-        foreach (array('name', 'cookie_lifetime', 'cookie_path', 'cookie_domain', 'cookie_secure', 'cookie_httponly', 'auto_start') as $key) {
+        foreach (array('name', 'cookie_lifetime', 'cookie_path', 'cookie_domain', 'cookie_secure', 'cookie_httponly', 'auto_start', 'gc_maxlifetime', 'gc_probability', 'gc_divisor') as $key) {
             if (isset($config[$key])) {
                 $options[$key] = $config[$key];
             }
