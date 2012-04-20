@@ -21,5 +21,5 @@ use Symfony\Component\Validator\Constraint;
  */
 class Language extends Constraint
 {
-    public $message = 'This value is not a valid language';
+    public $message = 'This value is not a valid language.';
 }

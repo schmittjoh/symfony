@@ -71,7 +71,7 @@ class FormBuilderTest extends \PHPUnit_Framework_TestCase
      * Changing the name is not allowed, otherwise the name and property path
      * are not synchronized anymore
      *
-     * @see FieldType::buildForm
+     * @see FormType::buildForm
      */
     public function testNoSetName()
     {
@@ -108,6 +108,22 @@ class FormBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($this->builder->has('foo'));
         $this->builder->add('foo', 'text');
         $this->assertTrue($this->builder->has('foo'));
+    }
+
+    public function testAll()
+    {
+        $this->assertCount(0, $this->builder->all());
+        $this->assertFalse($this->builder->has('foo'));
+
+        $this->builder->add('foo', 'text');
+        $children = $this->builder->all();
+
+        $this->assertTrue($this->builder->has('foo'));
+        $this->assertCount(1, $children);
+        $this->assertArrayHasKey('foo', $children);
+
+        $foo = $children['foo'];
+        $this->assertEquals('text', $foo['type']);
     }
 
     public function testAddFormType()

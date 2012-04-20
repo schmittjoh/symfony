@@ -1,4 +1,4 @@
-UPGRADE FROM 2.0 to 2.1
+﻿UPGRADE FROM 2.0 to 2.1
 =======================
 
 ### General
@@ -12,6 +12,14 @@ UPGRADE FROM 2.0 to 2.1
     `config_test.yml` imports `config_dev.yml`) and/or share a common base
     configuration (i.e. `config.yml`), merging could yield a set of base URL's
     for multiple environments.
+
+### Doctrine
+
+    The DoctrineBundle is moved from the Symfony repository to the Doctrine repository.
+    Therefore you should change the namespace of this bundle in your AppKernel.php:
+
+    Before: `new Symfony\Bundle\DoctrineBundle\DoctrineBundle()`
+    After: `new Doctrine\Bundle\DoctrineBundle\DoctrineBundle()`
 
 ### HttpFoundation
 
@@ -33,6 +41,11 @@ UPGRADE FROM 2.0 to 2.1
     framework:
         default_locale: fr
     ```
+
+  * The methods `getPathInfo()`, `getBaseUrl()` and `getBasePath()` of
+    a `Request` now all return a raw value (vs a urldecoded value before). Any call
+    to one of these methods must be checked and wrapped in a `rawurldecode()` if
+    needed.
 
     ##### Retrieving the locale from a Twig template
 
@@ -87,8 +100,50 @@ UPGRADE FROM 2.0 to 2.1
         // ...
     }
     ```
+  * The custom factories for the firewall configuration are now
+    registered during the build method of bundles instead of being registered
+    by the end-user. This means that you will you need to remove the 'factories' 
+    keys in your security configuration.
 
-### Form and Validator
+  * The Firewall listener is now registered after the Router listener. This
+    means that specific Firewall URLs (like /login_check and /logout) must now
+    have proper routes defined in your routing configuration.
+
+  * The user provider configuration has been refactored. The configuration
+    for the chain provider and the memory provider has been changed:
+
+     Before:
+
+     ``` yaml
+     security:
+         providers:
+             my_chain_provider:
+                 providers: [my_memory_provider, my_doctrine_provider]
+             my_memory_provider:
+                 users:
+                     toto: { password: foobar, roles: [ROLE_USER] }
+                     foo: { password: bar, roles: [ROLE_USER, ROLE_ADMIN] }
+     ```
+
+     After:
+
+     ``` yaml
+     security:
+         providers:
+             my_chain_provider:
+                 chain:
+                     providers: [my_memory_provider, my_doctrine_provider]
+             my_memory_provider:
+                 memory:
+                     users:
+                         toto: { password: foobar, roles: [ROLE_USER] }
+                         foo: { password: bar, roles: [ROLE_USER, ROLE_ADMIN] }
+     ```
+
+  * `MutableAclInterface::setParentAcl` now accepts `null`, review any
+    implementations of this interface to reflect this change.
+
+### Form
 
   * Child forms are no longer automatically validated. That means that you must
     explicitly set the `Valid` constraint in your model if you want to validate
@@ -158,25 +213,11 @@ UPGRADE FROM 2.0 to 2.1
     `getChoices()` and `getChoicesByValues()`. For the latter two, no
     replacement exists.
 
-  * The strategy for generating the `id` and `name` HTML attributes for choices
-    in a choice field has changed.
+  * The strategy for generating the `id` and `name` HTML attributes for
+    checkboxes and radio buttons in a choice field has changed.
 
     Instead of appending the choice value, a generated integer is now appended
-    by default. Take care if your JavaScript relies on the old behavior. If you
-    can guarantee that your choice values only contain ASCII letters, digits,
-    colons and underscores, you can restore the old behavior by setting the
-    `index_strategy` choice field option to `ChoiceList::COPY_CHOICE`.
-
-  * The strategy for generating the `value` HTML attribute for choices in a
-    choice field has changed.
-
-    Instead of using the choice value, a generated integer is now stored. Again,
-    take care if your JavaScript reads this value. If your choice field is a
-    non-expanded single-choice field, or if the choices are guaranteed not to
-    contain the empty string '' (which is the case when you added it manually
-    or when the field is a single-choice field and is not required), you can
-    restore the old behavior by setting the `value_strategy` choice field option
-    to `ChoiceList::COPY_CHOICE`.
+    by default. Take care if your JavaScript relies on that.
 
   * In the choice field type's template, the structure of the `choices` variable
     has changed.
@@ -228,8 +269,115 @@ UPGRADE FROM 2.0 to 2.1
     // results in the name "__proto__" in the template
     ```
 
+  * The `read_only` field attribute now renders as `readonly="readonly"`, use
+    `disabled` instead for `disabled="disabled"`.
+
+  * Form and field names must now start with a letter, digit or underscore
+    and only contain letters, digits, underscores, hyphens and colons
+
+  * `EntitiesToArrayTransformer` and `EntityToIdTransformer` have been removed.
+    The former has been replaced by `CollectionToArrayTransformer` in combination
+    with `EntityChoiceList`, the latter is not required in the core anymore.
+
+  * The following transformers have been renamed:
+
+      * `ArrayToBooleanChoicesTransformer` to `ChoicesToBooleanArrayTransformer`
+      * `ScalarToBooleanChoicesTransformer` to `ChoiceToBooleanArrayTransformer`
+      * `ArrayToChoicesTransformer` to `ChoicesToValuesTransformer`
+      * `ScalarToChoiceTransformer` to `ChoiceToValueTransformer`
+
+    to be consistent with the naming in `ChoiceListInterface`.
+
+  * `FormUtil::toArrayKey()` and `FormUtil::toArrayKeys()` have been removed.
+    They were merged into ChoiceList and have no public equivalent anymore.
+
+  * The options passed to the `getParent()` method of form types no longer
+    contain default options. They only contain the options passed by the user.
+
+    You should check if options exist before attempting to read their value.
+
+    Before:
+
+    ```
+    public function getParent(array $options)
+    {
+        return 'single_text' === $options['widget'] ? 'text' : 'choice';
+    }
+    ```
+
+    After:
+
+    ```
+    public function getParent(array $options)
+    {
+        return isset($options['widget']) && 'single_text' === $options['widget'] ? 'text' : 'choice';
+    }
+    ```
+    
+  * The methods `getDefaultOptions()` and `getAllowedOptionValues()` of form
+    types no longer receive an option array.
+    
+    You can specify options that depend on other options using closures instead.
+    
+    Before:
+    
+    ```
+    public function getDefaultOptions(array $options)
+    {
+        $defaultOptions = array();
+        
+        if ($options['multiple']) {
+            $defaultOptions['empty_data'] = array();
+        }
+        
+        return $defaultOptions;
+    }
+    ```
+    
+    After:
+    
+    ```
+    public function getDefaultOptions()
+    {
+        return array(
+            'empty_data' => function (Options $options, $previousValue) {
+                return $options['multiple'] ? array() : $previousValue;
+            }
+        );
+    }
+    ```
+    
+    The second argument `$previousValue` does not have to be specified if not
+    needed.
+
+  * The `add()`, `remove()`, `setParent()`, `bind()` and `setData()` methods in
+    the Form class now throw an exception if the form is already bound.
+
+    If you used these methods on bound forms, you should consider moving your
+    logic to an event listener that observes one of the following events:
+    `FormEvents::PRE_BIND`, `FormEvents::BIND_CLIENT_DATA` or
+    `FormEvents::BIND_NORM_DATA`.
+
+  * The interface FormValidatorInterface was deprecated and will be removed
+    in Symfony 2.3.
+
+    If you implemented custom validators using this interface, you can
+    substitute them by event listeners listening to the FormEvents::POST_BIND
+    (or any other of the BIND events). In case you used the CallbackValidator
+    class, you should now pass the callback directly to `addEventListener`.
+
+  * simplified CSRF protection and removed the csrf type
+
+  * deprecated FieldType and merged it into FormType
+
+  * [BC BREAK] renamed "field_*" theme blocks to "form_*" and "field_widget" to
+    "input"
+
+### Validator
+
   * The methods `setMessage()`, `getMessageTemplate()` and
-    `getMessageParameters()` in the Constraint class were deprecated.
+    `getMessageParameters()` in the Constraint class were deprecated and will
+    be removed in Symfony 2.3.
 
     If you have implemented custom validators, you should use the
     `addViolation()` method on the `ExecutionContext` object instead.
@@ -266,36 +414,77 @@ UPGRADE FROM 2.0 to 2.1
     }
     ```
 
-  * The options passed to the `getParent()` method of form types no longer
-    contain default options.
+  * The method `setPropertyPath()` in the ExecutionContext class
+    was removed.
 
-    You should check if options exist before attempting to read their value.
+    You should use the `addViolationAtSubPath()` method on the
+    `ExecutionContext` object instead.
 
     Before:
 
     ```
-    public function getParent(array $options)
+    public function isPropertyValid(ExecutionContext $context)
     {
-        return 'single_text' === $options['widget'] ? 'text' : 'choice';
+        // ...
+        $propertyPath = $context->getPropertyPath() . '.property';
+        $context->setPropertyPath($propertyPath);
+        $context->addViolation('Error Message', array(), null);
     }
     ```
 
     After:
 
     ```
-    public function getParent(array $options)
+    public function isPropertyValid(ExecutionContext $context)
     {
-        return isset($options['widget']) && 'single_text' === $options['widget'] ? 'text' : 'choice';
+        // ...
+        $context->addViolationAtSubPath('property', 'Error Message', array(), null);
+
     }
     ```
 
-  * The `add()`, `remove()`, `setParent()`, `bind()` and `setData()` methods in
-    the Form class now throw an exception if the form is already bound.
+  * The method `isValid` of `ConstraintValidatorInterface` was renamed to
+    `validate` and its return value was dropped.
 
-    If you used these methods on bound forms, you should consider moving your
-    logic to an event listener that observes one of the following events:
-    `FormEvents::PRE_BIND`, `FormEvents::BIND_CLIENT_DATA` or
-    `FormEvents::BIND_NORM_DATA`.
+    `ConstraintValidator` still contains the deprecated `isValid` method and
+    forwards `validate` calls to `isValid` by default. This BC layer will be 
+    removed in Symfony 2.3. You are advised to rename your methods. You should
+    also remove the return values, which have never been used by the framework.
+
+    Before:
+
+    ```
+    public function isValid($value, Constraint $constraint)
+    {
+        // ...
+        if (!$valid) {
+            $this->context->addViolation($constraint->message, array(
+                '{{ value }}' => $value,
+            ));
+
+            return false;
+        }
+    }
+    ```
+
+    After:
+
+    ```
+    public function validate($value, Constraint $constraint)
+    {
+        // ...
+        if (!$valid) {
+            $this->context->addViolation($constraint->message, array(
+                '{{ value }}' => $value,
+            ));
+            
+            return;
+        }
+    }
+    ```
+
+  * Core translation messages are changed. Dot is added at the end of each message.
+    Overwritten core translations should be fixed if any. More info here.
 
 ### Session
 
@@ -340,6 +529,43 @@ UPGRADE FROM 2.0 to 2.1
     to `Handler\FooSessionHandler`.  E.g. `PdoSessionStorage` becomes `Handler\PdoSessionHandler`.
 
   * Refactor code using `$session->*flash*()` methods to use `$session->getFlashBag()->*()`.
+
+### Serializer
+
+ * The key names craeted by the  `GetSetMethodNormalizer` have changed from
+    from all lowercased to camelCased (e.g. `mypropertyvalue` to `myPropertyValue`).
+
+ * The `item` element is now converted to an array when deserializing XML.
+
+    ``` xml
+    <?xml version="1.0"?>
+    <response>
+        <item><title><![CDATA[title1]]></title></item><item><title><![CDATA[title2]]></title></item>
+    </response>
+    ```
+
+    Before:
+
+        Array()
+
+    After:
+
+        Array(
+            [item] => Array(
+                [0] => Array(
+                    [title] => title1
+                )
+                [1] => Array(
+                    [title] => title2
+                )
+            )
+        )
+
+### Routing
+
+  * The UrlMatcher urldecodes the route parameters only once, they were
+    decoded twice before. Note that the `urldecode()` calls have been changed for a
+    single `rawurldecode()` in order to support `+` for input paths.
 
 ### FrameworkBundle
 
@@ -387,3 +613,7 @@ To use mock session storage use the following.  `handler_id` is irrelevant in th
              storage_id: session.storage.mock_file
   ```
 
+### WebProfilerBundle
+
+  * You must clear old profiles after upgrading to 2.1. If you are using a
+    database then you will need to remove the table.

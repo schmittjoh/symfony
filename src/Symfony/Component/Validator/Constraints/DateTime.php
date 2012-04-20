@@ -21,5 +21,5 @@ use Symfony\Component\Validator\Constraint;
  */
 class DateTime extends Constraint
 {
-    public $message = 'This value is not a valid datetime';
+    public $message = 'This value is not a valid datetime.';
 }

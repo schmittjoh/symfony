@@ -37,7 +37,7 @@ class SizeLengthValidatorTest extends \PHPUnit_Framework_TestCase
         $this->context->expects($this->never())
             ->method('addViolation');
 
-        $this->assertTrue($this->validator->isValid(null, new SizeLength(array('min' => 6, 'max' => 10))));
+        $this->validator->validate(null, new SizeLength(array('min' => 6, 'max' => 10)));
     }
 
     public function testEmptyStringIsValid()
@@ -45,7 +45,7 @@ class SizeLengthValidatorTest extends \PHPUnit_Framework_TestCase
         $this->context->expects($this->never())
             ->method('addViolation');
 
-        $this->assertTrue($this->validator->isValid('', new SizeLength(array('min' => 6, 'max' => 10))));
+        $this->validator->validate('', new SizeLength(array('min' => 6, 'max' => 10)));
     }
 
     /**
@@ -53,7 +53,7 @@ class SizeLengthValidatorTest extends \PHPUnit_Framework_TestCase
      */
     public function testExpectsStringCompatibleType()
     {
-        $this->validator->isValid(new \stdClass(), new SizeLength(array('min' => 6, 'max' => 10)));
+        $this->validator->validate(new \stdClass(), new SizeLength(array('min' => 6, 'max' => 10)));
     }
 
     /**
@@ -69,7 +69,7 @@ class SizeLengthValidatorTest extends \PHPUnit_Framework_TestCase
             ->method('addViolation');
 
         $constraint = new SizeLength(array('min' => 6, 'max' => 10));
-        $this->assertTrue($this->validator->isValid($value, $constraint));
+        $this->validator->validate($value, $constraint);
     }
 
     public function getValidValues()
@@ -99,7 +99,7 @@ class SizeLengthValidatorTest extends \PHPUnit_Framework_TestCase
             ->method('addViolation');
 
         $constraint = new SizeLength(array('min' => 6, 'max' => 10));
-        $this->assertFalse($this->validator->isValid($value, $constraint));
+        $this->validator->validate($value, $constraint);
     }
 
     public function getInvalidValues()
@@ -129,9 +129,9 @@ class SizeLengthValidatorTest extends \PHPUnit_Framework_TestCase
             ->with('myMessage', array(
                 '{{ value }}' => '1234',
                 '{{ limit }}' => 5,
-            ));
+            ), null, 5);
 
-        $this->assertFalse($this->validator->isValid('1234', $constraint));
+        $this->validator->validate('1234', $constraint);
     }
 
     public function testMaxMessageIsSet()
@@ -147,9 +147,9 @@ class SizeLengthValidatorTest extends \PHPUnit_Framework_TestCase
             ->with('myMessage', array(
                 '{{ value }}' => '12345678901',
                 '{{ limit }}' => 10,
-            ));
+            ), null, 10);
 
-        $this->assertFalse($this->validator->isValid('12345678901', $constraint));
+        $this->validator->validate('12345678901', $constraint);
     }
 
     public function testExactMessageIsSet()
@@ -165,8 +165,8 @@ class SizeLengthValidatorTest extends \PHPUnit_Framework_TestCase
             ->with('myMessage', array(
                 '{{ value }}' => '1234',
                 '{{ limit }}' => 5,
-            ));
+            ), null, 5);
 
-        $this->assertFalse($this->validator->isValid('1234', $constraint));
+        $this->validator->validate('1234', $constraint);
     }
 }

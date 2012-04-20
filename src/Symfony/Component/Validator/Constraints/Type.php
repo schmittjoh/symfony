@@ -21,7 +21,7 @@ use Symfony\Component\Validator\Constraint;
  */
 class Type extends Constraint
 {
-    public $message = 'This value should be of type {{ type }}';
+    public $message = 'This value should be of type {{ type }}.';
     public $type;
 
     /**

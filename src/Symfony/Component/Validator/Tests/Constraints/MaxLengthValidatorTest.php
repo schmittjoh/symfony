@@ -37,7 +37,7 @@ class MaxLengthValidatorTest extends \PHPUnit_Framework_TestCase
         $this->context->expects($this->never())
             ->method('addViolation');
 
-        $this->assertTrue($this->validator->isValid(null, new MaxLength(array('limit' => 5))));
+        $this->validator->validate(null, new MaxLength(array('limit' => 5)));
     }
 
     public function testEmptyStringIsValid()
@@ -45,7 +45,7 @@ class MaxLengthValidatorTest extends \PHPUnit_Framework_TestCase
         $this->context->expects($this->never())
             ->method('addViolation');
 
-        $this->assertTrue($this->validator->isValid('', new MaxLength(array('limit' => 5))));
+        $this->validator->validate('', new MaxLength(array('limit' => 5)));
     }
 
     /**
@@ -53,7 +53,7 @@ class MaxLengthValidatorTest extends \PHPUnit_Framework_TestCase
      */
     public function testExpectsStringCompatibleType()
     {
-        $this->validator->isValid(new \stdClass(), new MaxLength(array('limit' => 5)));
+        $this->validator->validate(new \stdClass(), new MaxLength(array('limit' => 5)));
     }
 
     /**
@@ -69,7 +69,7 @@ class MaxLengthValidatorTest extends \PHPUnit_Framework_TestCase
             ->method('addViolation');
 
         $constraint = new MaxLength(array('limit' => 5));
-        $this->assertTrue($this->validator->isValid($value, $constraint));
+        $this->validator->validate($value, $constraint);
     }
 
     public function getValidValues()
@@ -101,9 +101,9 @@ class MaxLengthValidatorTest extends \PHPUnit_Framework_TestCase
             ->with('myMessage', array(
                 '{{ value }}' => $value,
                 '{{ limit }}' => 5,
-            ));
+            ), null, 5);
 
-        $this->assertFalse($this->validator->isValid($value, $constraint));
+        $this->validator->validate($value, $constraint);
     }
 
     public function getInvalidValues()

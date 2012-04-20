@@ -32,7 +32,7 @@ class DateTimeType extends AbstractType
         $parts = array('year', 'month', 'day', 'hour', 'minute');
         $timeParts = array('hour', 'minute');
 
-        $format = 'Y-m-d H:i:00';
+        $format = 'Y-m-d H:i';
         if ($options['with_seconds']) {
             $format = 'Y-m-d H:i:s';
 
@@ -102,7 +102,7 @@ class DateTimeType extends AbstractType
 
         if ('string' === $options['input']) {
             $builder->appendNormTransformer(new ReversedTransformer(
-                new DateTimeToStringTransformer($options['data_timezone'], $options['data_timezone'], $format)
+                new DateTimeToStringTransformer($options['data_timezone'], $options['data_timezone'])
             ));
         } elseif ('timestamp' === $options['input']) {
             $builder->appendNormTransformer(new ReversedTransformer(
@@ -128,7 +128,7 @@ class DateTimeType extends AbstractType
     /**
      * {@inheritdoc}
      */
-    public function getDefaultOptions(array $options)
+    public function getDefaultOptions()
     {
         return array(
             'input'         => 'datetime',
@@ -153,7 +153,7 @@ class DateTimeType extends AbstractType
             'widget'        => null,
             // This will overwrite "empty_value" child options
             'empty_value'   => null,
-            // If initialized with a \DateTime object, FieldType initializes
+            // If initialized with a \DateTime object, FormType initializes
             // this option to "\DateTime". Since the internal, normalized
             // representation is not \DateTime, but an array, we need to unset
             // this option.
@@ -164,7 +164,7 @@ class DateTimeType extends AbstractType
     /**
      * {@inheritdoc}
      */
-    public function getAllowedOptionValues(array $options)
+    public function getAllowedOptionValues()
     {
         return array(
             'input'       => array(
@@ -200,7 +200,7 @@ class DateTimeType extends AbstractType
      */
     public function getParent(array $options)
     {
-        return isset($options['widget']) && 'single_text' === $options['widget'] ? 'field' : 'form';
+        return 'field';
     }
 
     /**

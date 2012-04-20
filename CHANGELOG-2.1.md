@@ -1,7 +1,7 @@
-CHANGELOG for 2.1.x
+﻿CHANGELOG for 2.1.x
 ===================
 
-This changelog references the relevant changes (bug and security fixes) done
+This changelog references the relevant changes (bug and security fixes) made
 in 2.1 minor versions.
 
 To get the diff for a specific change, go to https://github.com/symfony/symfony/commit/XXX where XXX is the change hash
@@ -14,6 +14,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
  * added a default implementation of the ManagerRegistry
  * added a session storage for Doctrine DBAL
+ * DoctrineOrmTypeGuesser now guesses "collection" for array Doctrine type
 
 ### TwigBridge
 
@@ -55,10 +56,10 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * Added `handler_id` configuration under `session` key to represent `session.handler`
    service, defaults to `session.handler.native_file`.
  * Added `gc_maxlifetime`, `gc_probability`, and `gc_divisor` to session
-   configuration.This means session garbage collection has a
-  `gc_probability`/`gc_divisor` chance of being run.  The `gc_maxlifetime` means
-   how long a session can idle for which is separate from cookie lifetime which
-   defines how long a cookie can be store on the remote client.
+   configuration. This means session garbage collection has a
+  `gc_probability`/`gc_divisor` chance of being run. The `gc_maxlifetime` defines
+   how long a session can idle for. It is different from cookie lifetime which
+   declares how long a cookie can be stored on the remote client.
 
 
 ### MonologBundle
@@ -72,43 +73,43 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
    by the end-user (you need to remove the 'factories' keys in your security
    configuration).
 
- * [BC BREAK] The Firewall listener is now registered after the Router one. It
+ * [BC BREAK] The Firewall listener is now registered after the Router one. This
    means that specific Firewall URLs (like /login_check and /logout must now
    have proper route defined in your routing configuration)
 
  * [BC BREAK] refactored the user provider configuration. The configuration
    changed for the chain provider and the memory provider:
 
-     Before:
+    Before:
 
-     ``` yaml
-     security:
-         providers:
-             my_chain_provider:
-                 providers: [my_memory_provider, my_doctrine_provider]
-             my_memory_provider:
-                 users:
-                     toto: { password: foobar, roles: [ROLE_USER] }
-                     foo: { password: bar, roles: [ROLE_USER, ROLE_ADMIN] }
-     ```
+    ``` yaml
+    security:
+        providers:
+            my_chain_provider:
+                providers: [my_memory_provider, my_doctrine_provider]
+            my_memory_provider:
+                users:
+                    toto: { password: foobar, roles: [ROLE_USER] }
+                    foo: { password: bar, roles: [ROLE_USER, ROLE_ADMIN] }
+    ```
 
-     After:
+    After:
 
-     ``` yaml
-     security:
-         providers:
-             my_chain_provider:
-                 chain:
-                     providers: [my_memory_provider, my_doctrine_provider]
-             my_memory_provider:
-                 memory:
-                     users:
-                         toto: { password: foobar, roles: [ROLE_USER] }
-                         foo: { password: bar, roles: [ROLE_USER, ROLE_ADMIN] }
-     ```
+    ``` yaml
+    security:
+        providers:
+            my_chain_provider:
+                chain:
+                    providers: [my_memory_provider, my_doctrine_provider]
+            my_memory_provider:
+                memory:
+                    users:
+                        toto: { password: foobar, roles: [ROLE_USER] }
+                        foo: { password: bar, roles: [ROLE_USER, ROLE_ADMIN] }
+    ```
 
  * [BC BREAK] Method `equals` was removed from `UserInterface` to its own new
-   `EquatableInterface`, now user class can implement this interface to override
+   `EquatableInterface`. The user class can now implement this interface to override
    the default implementation of users equality test.
 
  * added a validator for the user password
@@ -119,19 +120,19 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
  * Added optional CSRF protection to LogoutListener:
 
-   ``` yaml
-   security:
-       firewalls:
-           default:
-               logout:
-                   path: /logout_path
-                   target: /
-                   csrf_parameter: _csrf_token        # Optional (defaults to "_csrf_token")
-                   csrf_provider:  form.csrf_provider # Required to enable protection
-                   intention:      logout             # Optional (defaults to "logout")
-   ```
+    ``` yaml
+    security:
+        firewalls:
+            default:
+                logout:
+                    path: /logout_path
+                    target: /
+                    csrf_parameter: _csrf_token        # Optional (defaults to "_csrf_token")
+                    csrf_provider:  form.csrf_provider # Required to enable protection
+                    intention:      logout             # Optional (defaults to "logout")
+    ```
 
-   If the LogoutListener has CSRF protection enabled but cannot validate a token,
+    If the LogoutListener has CSRF protection enabled but cannot validate a token,
    then a LogoutException will be thrown.
 
  * Added `logout_url` templating helper and Twig extension, which may be used to
@@ -148,12 +149,12 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 ### TwigBundle
 
  * added the real template name when an error occurs in a Twig template
+ * added the twig:lint command that will validate a Twig template syntax.
 
 ### WebProfilerBundle
 
-[BC BREAK] You must clear old profiles after upgrading to 2.1 (don't forget to
-           remove the table if you are using a DB)
-
+ * [BC BREAK] You must clear old profiles after upgrading to 2.1 (don't forget to
+   remove the table if you are using a DB)
  * added support for the request method
  * added a routing panel
  * added a timeline panel
@@ -181,7 +182,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 ### ClassLoader
 
  * added a DebugClassLoader able to wrap any autoloader providing a findFile method
- * added a new ApcClassLoader using composition to wrap other loaders
+ * added a new ApcClassLoader and XcacheClassLoader using composition to wrap other loaders
  * added a new ClassLoader which does not distinguish between namespaced and pear-like classes (as the PEAR
    convention is a subset of PSR-0) and supports using Composer's namespace maps
  * added a class map generator
@@ -193,7 +194,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
 
 ### DomCrawler
 
- * refactor the Form class internals to support multi-dimensional fields (the public API is backward compatible)
+ * refactored the Form class internals to support multi-dimensional fields (the public API is backward compatible)
  * added a way to get parsing errors for Crawler::addHtmlContent() and Crawler::addXmlContent() via libxml functions
  * added support for submitting a form without a submit button
 
@@ -242,7 +243,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
    * ArrayToChoicesTransformer to ChoicesToValuesTransformer
    * ScalarToChoiceTransformer to ChoiceToValueTransformer
 
-   to be consistent with the naming in ChoiceListInterface.
+    to be consistent with the naming in ChoiceListInterface.
 
  * [BC BREAK] removed FormUtil::toArrayKey() and FormUtil::toArrayKeys().
    They were merged into ChoiceList and have no public equivalent anymore.
@@ -251,15 +252,29 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * the radio type is now a child of the checkbox type
  * the collection, choice (with multiple selection) and entity (with multiple
    selection) types now make use of addXxx() and removeXxx() methods in your
-   model
- * added options "add_method" and "remove_method" to collection and choice type
+   model if you set "by_reference" to false. For a custom, non-recognized
+   singular form, set the "property_path" option like this: "plural|singular"
  * forms now don't create an empty object anymore if they are completely
    empty and not required. The empty value for such forms is null.
  * added constant Guess::VERY_HIGH_CONFIDENCE
- * FormType::getDefaultOptions() now sees default options defined by parent types
  * [BC BREAK] FormType::getParent() does not see default options anymore
  * [BC BREAK] The methods `add`, `remove`, `setParent`, `bind` and `setData`
    in class Form now throw an exception if the form is already bound
+ * fields of constrained classes without a NotBlank or NotNull constraint are
+   set to not required now, as stated in the docs
+ * fixed TimeType and DateTimeType to not display seconds when "widget" is
+   "single_text" unless "with_seconds" is set to true
+ * checkboxes of in an expanded multiple-choice field don't include the choice
+   in their name anymore. Their names terminate with "[]" now.
+ * [BC BREAK] FormType::getDefaultOptions() and FormType::getAllowedOptionValues()
+   don't receive an options array anymore.
+ * deprecated FormValidatorInterface and substituted its implementations
+   by event subscribers
+ * simplified CSRF protection and removed the csrf type
+ * deprecated FieldType and merged it into FormType
+ * [BC BREAK] renamed "field_*" theme blocks to "form_*" and "field_widget" to
+   "input"
+ * ValidatorTypeGuesser now guesses "collection" for array type constraint
 
 ### HttpFoundation
 
@@ -294,7 +309,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
    `ArraySessionStorage`, and replaced with `MockArraySessionStorage` for unit
    tests; removed `FilesystemSessionStorage`, and replaced with`MockFileSessionStorage`
    for functional tests.  These do not interact with global session ini
-   configuration values, session functions or `$_SESSION` supreglobal. This means
+   configuration values, session functions or `$_SESSION` superglobal. This means
    they can be configured directly allowing multiple instances to work without
    conflicting in the same PHP process.
  * [BC BREAK] Removed the `close()` method from the `Session` class, as this is
@@ -304,7 +319,7 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
    which returns a `FlashBagInterface`.
  * `Session->clear()` now only clears session attributes as before it cleared
    flash messages and attributes. `Session->getFlashBag()->all()` clears flashes now.
- * Session data is now managed by `SessionBagInterface` which to better encapsulate
+ * Session data is now managed by `SessionBagInterface` to better encapsulate
    session data.
  * Refactored session attribute and flash messages system to their own
   `SessionBagInterface` implementations.
@@ -319,10 +334,17 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
    namespace session attributes.
  * Flash API can stores messages in an array so there may be multiple messages
    per flash type.  The old `Session` class API remains without BC break as it
-   will single messages as before.
+   will allow single messages as before.
  * Added basic session meta-data to the session to record session create time,
    last updated time, and the lifetime of the session cookie that was provided
    to the client.
+ * Request::getClientIp() method doesn't take a parameter anymore but bases
+   itself on the trustProxy parameter.
+ * Added isMethod() to Request object.
+ * [BC BREAK] The methods `getPathInfo()`, `getBaseUrl()` and `getBasePath()` of
+   a `Request` now all return a raw value (vs a urldecoded value before). Any call
+   to one of these methods must be checked and wrapped in a `rawurldecode()` if
+   needed.
 
 ### HttpKernel
 
@@ -350,41 +372,48 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * added a TraceableUrlMatcher
  * added the possibility to define options, default values and requirements for placeholders in prefix, including imported routes
  * added RouterInterface::getRouteCollection
+ * [BC BREAK] the UrlMatcher urldecodes the route parameters only once, they were decoded twice before.
+   Note that the `urldecode()` calls have been changed for a single `rawurldecode()` in order to support `+` for input paths.
+ * added RouteCollection::getRoot method to retrieve the root of a RouteCollection tree
+ * [BC BREAK] made RouteCollection::setParent private which could not have been used anyway without creating inconsistencies
+ * [BC BREAK] RouteCollection::remove also removes a route from parent collections (not only from its children)
 
 ### Security
 
  * after login, the user is now redirected to `default_target_path` if `use_referer` is true and the referrer is the `login_path`.
  * added a way to remove a token from a session
  * [BC BREAK] changed `MutableAclInterface::setParentAcl` to accept `null`, review your implementation to reflect this change.
+ * `ObjectIdentity::fromDomainObject`, `UserSecurityIdentity::fromAccount` and `UserSecurityIdentity::fromToken` now return
+   correct identities for proxies objects (e.g. Doctrine proxies)
 
 ### Serializer
 
  * [BC BREAK] changed `GetSetMethodNormalizer`'s key names from all lowercased to camelCased (e.g. `mypropertyvalue` to `myPropertyValue`)
  * [BC BREAK] convert the `item` XML tag to an array
 
-     ``` xml
-     <?xml version="1.0"?>
-     <response>
-         <item><title><![CDATA[title1]]></title></item><item><title><![CDATA[title2]]></title></item>
-     </response>
-     ```
+    ``` xml
+    <?xml version="1.0"?>
+    <response>
+        <item><title><![CDATA[title1]]></title></item><item><title><![CDATA[title2]]></title></item>
+    </response>
+    ```
 
-     Before:
+    Before:
 
-          Array()
+        Array()
 
-     After:
+    After:
 
-          Array(
-              [item] => Array(
-                  [0] => Array(
-                      [title] => title1
-                  )
-                  [1] => Array(
-                      [title] => title2
-                  )
-              )
-          )
+        Array(
+            [item] => Array(
+                [0] => Array(
+                    [title] => title1
+                )
+                [1] => Array(
+                    [title] => title2
+                )
+            )
+        )
 
 ### Translation
 
@@ -411,6 +440,9 @@ To get the diff between two versions, go to https://github.com/symfony/symfony/c
  * deprecated Constraint methods `setMessage`, `getMessageTemplate` and
    `getMessageParameters`
  * added support for dynamic group sequences with the GroupSequenceProvider pattern
+ * [BC BREAK] ConstraintValidatorInterface method `isValid` has been renamed to
+   `validate`, its return value was dropped. ConstraintValidator still contains
+   `isValid` for BC
 
 ### Yaml
 

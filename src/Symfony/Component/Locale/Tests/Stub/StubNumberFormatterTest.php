@@ -12,6 +12,7 @@
 namespace Symfony\Component\Locale\Tests\Stub;
 
 use Symfony\Component\Locale\Locale;
+use Symfony\Component\Locale\Stub\StubIntl;
 use Symfony\Component\Locale\Stub\StubNumberFormatter;
 use Symfony\Component\Locale\Tests\TestCase as LocaleTestCase;
 
@@ -144,14 +145,6 @@ class StubNumberFormatterTest extends LocaleTestCase
             array(-100, 'ALL', '(ALL100)'),
             array(1000.12, 'ALL', 'ALL1,000'),
 
-            array(100, 'BRL', 'R$100.00'),
-            array(-100, 'BRL', '(R$100.00)'),
-            array(1000.12, 'BRL', 'R$1,000.12'),
-
-            array(100, 'CRC', '₡100'),
-            array(-100, 'CRC', '(₡100)'),
-            array(1000.12, 'CRC', '₡1,000'),
-
             array(100, 'JPY', '¥100'),
             array(-100, 'JPY', '(¥100)'),
             array(1000.12, 'JPY', '¥1,000'),
@@ -159,15 +152,77 @@ class StubNumberFormatterTest extends LocaleTestCase
             array(100, 'EUR', '€100.00'),
             array(-100, 'EUR', '(€100.00)'),
             array(1000.12, 'EUR', '€1,000.12'),
+        );
+    }
+
+    /**
+     * @dataProvider formatCurrencyWithCurrencyStyleCostaRicanColonsRoundingProvider
+     */
+    public function testFormatCurrencyWithCurrencyStyleCostaRicanColonsRoundingStub($value, $currency, $symbol, $expected)
+    {
+        $formatter = $this->getStubFormatterWithCurrencyStyle();
+        $this->assertEquals(sprintf($expected, '₡'), $formatter->formatCurrency($value, $currency));
+    }
+
+    /**
+     * @dataProvider formatCurrencyWithCurrencyStyleCostaRicanColonsRoundingProvider
+     */
+    public function testFormatCurrencyWithCurrencyStyleCostaRicanColonsRoundingIntl($value, $currency, $symbol, $expected)
+    {
+        $this->skipIfIntlExtensionIsNotLoaded();
+        $this->skipIfICUVersionIsTooOld();
+        $formatter = $this->getIntlFormatterWithCurrencyStyle();
+        $this->assertEquals(sprintf($expected, $symbol), $formatter->formatCurrency($value, $currency));
+    }
+
+    public function formatCurrencyWithCurrencyStyleCostaRicanColonsRoundingProvider()
+    {
+        $crc = $this->isIntlExtensionLoaded() && $this->isSameAsIcuVersion('4.8') ? 'CRC' : '₡';
+
+        return array(
+            array(100, 'CRC', $crc, '%s100'),
+            array(-100, 'CRC', $crc, '(%s100)'),
+            array(1000.12, 'CRC', $crc, '%s1,000'),
+        );
+    }
+
+    /**
+     * @dataProvider formatCurrencyWithCurrencyStyleBrazilianRealRoundingProvider
+     */
+    public function testFormatCurrencyWithCurrencyStyleBrazilianRealRoundingStub($value, $currency, $symbol, $expected)
+    {
+        $formatter = $this->getStubFormatterWithCurrencyStyle();
+        $this->assertEquals(sprintf($expected, 'R'), $formatter->formatCurrency($value, $currency));
+    }
+
+    /**
+     * @dataProvider formatCurrencyWithCurrencyStyleBrazilianRealRoundingProvider
+     */
+    public function testFormatCurrencyWithCurrencyStyleBrazilianRealRoundingIntl($value, $currency, $symbol, $expected)
+    {
+        $this->skipIfIntlExtensionIsNotLoaded();
+        $this->skipIfICUVersionIsTooOld();
+        $formatter = $this->getIntlFormatterWithCurrencyStyle();
+        $this->assertEquals(sprintf($expected, $symbol), $formatter->formatCurrency($value, $currency));
+    }
+
+    public function formatCurrencyWithCurrencyStyleBrazilianRealRoundingProvider()
+    {
+        $brl = $this->isIntlExtensionLoaded() && $this->isSameAsIcuVersion('4.8') ? 'BR' : 'R';
+
+        return array(
+            array(100, 'BRL', $brl, '%s$100.00'),
+            array(-100, 'BRL', $brl, '(%s$100.00)'),
+            array(1000.12, 'BRL', $brl, '%s$1,000.12'),
 
             // Rounding checks
-            array(1000.121, 'BRL', 'R$1,000.12'),
-            array(1000.123, 'BRL', 'R$1,000.12'),
-            array(1000.125, 'BRL', 'R$1,000.12'),
-            array(1000.127, 'BRL', 'R$1,000.13'),
-            array(1000.129, 'BRL', 'R$1,000.13'),
-            array(11.50999, 'BRL', 'R$11.51'),
-            array(11.9999464, 'BRL', 'R$12.00')
+            array(1000.121, 'BRL', $brl, '%s$1,000.12'),
+            array(1000.123, 'BRL', $brl, '%s$1,000.12'),
+            array(1000.125, 'BRL', $brl, '%s$1,000.12'),
+            array(1000.127, 'BRL', $brl, '%s$1,000.13'),
+            array(1000.129, 'BRL', $brl, '%s$1,000.13'),
+            array(11.50999, 'BRL', $brl, '%s$11.51'),
+            array(11.9999464, 'BRL', $brl, '%s$12.00')
         );
     }
 
@@ -222,15 +277,36 @@ class StubNumberFormatterTest extends LocaleTestCase
 
     public function testFormatStub()
     {
+        $errorCode = StubIntl::U_ZERO_ERROR;
+        $errorMessage = 'U_ZERO_ERROR';
+
         $formatter = $this->getStubFormatterWithDecimalStyle();
         $this->assertSame('9.555', $formatter->format(9.555));
+
+        $this->assertSame($errorMessage, StubIntl::getErrorMessage());
+        $this->assertSame($errorCode, StubIntl::getErrorCode());
+        $this->assertFalse(StubIntl::isFailure(StubIntl::getErrorCode()));
+        $this->assertSame($errorMessage, $formatter->getErrorMessage());
+        $this->assertSame($errorCode, $formatter->getErrorCode());
+        $this->assertFalse(StubIntl::isFailure($formatter->getErrorCode()));
     }
 
     public function testFormatIntl()
     {
         $this->skipIfIntlExtensionIsNotLoaded();
+
+        $errorCode = StubIntl::U_ZERO_ERROR;
+        $errorMessage = 'U_ZERO_ERROR';
+
         $formatter = $this->getIntlFormatterWithDecimalStyle();
         $this->assertSame('9.555', $formatter->format(9.555));
+
+        $this->assertSame($errorMessage, intl_get_error_message());
+        $this->assertSame($errorCode, intl_get_error_code());
+        $this->assertFalse(intl_is_failure(intl_get_error_code()));
+        $this->assertSame($errorMessage, $formatter->getErrorMessage());
+        $this->assertSame($errorCode, $formatter->getErrorCode());
+        $this->assertFalse(intl_is_failure($formatter->getErrorCode()));
     }
 
     /**
@@ -611,7 +687,7 @@ class StubNumberFormatterTest extends LocaleTestCase
     public function testGetErrorCode()
     {
         $formatter = $this->getStubFormatterWithDecimalStyle();
-        $this->assertEquals(StubNumberFormatter::U_ZERO_ERROR, $formatter->getErrorCode());
+        $this->assertEquals(StubIntl::U_ZERO_ERROR, $formatter->getErrorCode());
     }
 
     public function testGetLocale()
@@ -666,10 +742,19 @@ class StubNumberFormatterTest extends LocaleTestCase
         $this->assertSame($expected, $parsedValue, $message);
 
         if ($expected === false) {
-            $this->assertSame($formatter::U_PARSE_ERROR, $formatter->getErrorCode());
+            $errorCode = StubIntl::U_PARSE_ERROR;
+            $errorMessage = 'Number parsing failed: U_PARSE_ERROR';
         } else {
-            $this->assertEquals($formatter::U_ZERO_ERROR, $formatter->getErrorCode());
+            $errorCode = StubIntl::U_ZERO_ERROR;
+            $errorMessage = 'U_ZERO_ERROR';
         }
+
+        $this->assertSame($errorMessage, StubIntl::getErrorMessage());
+        $this->assertSame($errorCode, StubIntl::getErrorCode());
+        $this->assertSame($errorCode !== 0, StubIntl::isFailure(StubIntl::getErrorCode()));
+        $this->assertSame($errorMessage, $formatter->getErrorMessage());
+        $this->assertSame($errorCode, $formatter->getErrorCode());
+        $this->assertSame($errorCode !== 0, StubIntl::isFailure($formatter->getErrorCode()));
     }
 
     /**
@@ -679,15 +764,25 @@ class StubNumberFormatterTest extends LocaleTestCase
     {
         $this->skipIfIntlExtensionIsNotLoaded();
         $this->skipIfICUVersionIsTooOld();
+
         $formatter = $this->getIntlFormatterWithDecimalStyle();
         $parsedValue = $formatter->parse($value, \NumberFormatter::TYPE_DOUBLE);
         $this->assertSame($expected, $parsedValue, $message);
 
         if ($expected === false) {
-            $this->assertSame(U_PARSE_ERROR, $formatter->getErrorCode());
+            $errorCode = StubIntl::U_PARSE_ERROR;
+            $errorMessage = 'Number parsing failed: U_PARSE_ERROR';
         } else {
-            $this->assertEquals(U_ZERO_ERROR, $formatter->getErrorCode());
+            $errorCode = StubIntl::U_ZERO_ERROR;
+            $errorMessage = 'U_ZERO_ERROR';
         }
+
+        $this->assertSame($errorMessage, intl_get_error_message());
+        $this->assertSame($errorCode, intl_get_error_code());
+        $this->assertSame($errorCode > 0, intl_is_failure(intl_get_error_code()));
+        $this->assertSame($errorMessage, $formatter->getErrorMessage());
+        $this->assertSame($errorCode, $formatter->getErrorCode());
+        $this->assertSame($errorCode > 0, intl_is_failure($formatter->getErrorCode()));
     }
 
     public function parseProvider()

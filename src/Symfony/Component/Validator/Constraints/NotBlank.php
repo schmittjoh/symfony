@@ -21,5 +21,5 @@ use Symfony\Component\Validator\Constraint;
  */
 class NotBlank extends Constraint
 {
-    public $message = 'This value should not be blank';
+    public $message = 'This value should not be blank.';
 }
