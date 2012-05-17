@@ -16,7 +16,6 @@ use Symfony\Component\Form\Extension\Csrf\CsrfProvider\CsrfProviderInterface;
 use Symfony\Component\Form\Extension\Csrf\EventListener\CsrfValidationListener;
 use Symfony\Component\Form\FormBuilder;
 use Symfony\Component\Form\FormView;
-use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormInterface;
 
 /**
@@ -38,8 +37,8 @@ class FormTypeCsrfExtension extends AbstractTypeExtension
     /**
      * Adds a CSRF field to the form when the CSRF protection is enabled.
      *
-     * @param FormBuilder   $builder The form builder
-     * @param array         $options The options
+     * @param FormBuilder $builder The form builder
+     * @param array       $options The options
      */
     public function buildForm(FormBuilder $builder, array $options)
     {
@@ -65,7 +64,7 @@ class FormTypeCsrfExtension extends AbstractTypeExtension
      */
     public function buildViewBottomUp(FormView $view, FormInterface $form)
     {
-        if (!$view->hasParent() && $view->hasChildren() && $form->hasAttribute('csrf_field_name')) {
+        if (!$view->hasParent() && !$form->getAttribute('single_control') && $form->hasAttribute('csrf_field_name')) {
             $name = $form->getAttribute('csrf_field_name');
             $csrfProvider = $form->getAttribute('csrf_provider');
             $intention = $form->getAttribute('csrf_intention');

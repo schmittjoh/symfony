@@ -102,7 +102,7 @@
     ```
   * The custom factories for the firewall configuration are now
     registered during the build method of bundles instead of being registered
-    by the end-user. This means that you will you need to remove the 'factories' 
+    by the end-user. This means that you will you need to remove the 'factories'
     keys in your security configuration.
 
   * The Firewall listener is now registered after the Router listener. This
@@ -223,8 +223,7 @@
     has changed.
 
     The `choices` variable now contains ChoiceView objects with two getters,
-    `getValue()` and `getLabel()`, to access the choice data. The indices of the
-    array are controlled by the choice field's `index_generation` option.
+    `getValue()` and `getLabel()`, to access the choice data.
 
     Before:
 
@@ -313,29 +312,29 @@
         return isset($options['widget']) && 'single_text' === $options['widget'] ? 'text' : 'choice';
     }
     ```
-    
+
   * The methods `getDefaultOptions()` and `getAllowedOptionValues()` of form
     types no longer receive an option array.
-    
+
     You can specify options that depend on other options using closures instead.
-    
+
     Before:
-    
+
     ```
     public function getDefaultOptions(array $options)
     {
         $defaultOptions = array();
-        
+
         if ($options['multiple']) {
             $defaultOptions['empty_data'] = array();
         }
-        
+
         return $defaultOptions;
     }
     ```
-    
+
     After:
-    
+
     ```
     public function getDefaultOptions()
     {
@@ -346,7 +345,7 @@
         );
     }
     ```
-    
+
     The second argument `$previousValue` does not have to be specified if not
     needed.
 
@@ -366,12 +365,98 @@
     (or any other of the BIND events). In case you used the CallbackValidator
     class, you should now pass the callback directly to `addEventListener`.
 
-  * simplified CSRF protection and removed the csrf type
+  * Since FormType and FieldType were merged, you need to adapt your form
+    themes.
 
-  * deprecated FieldType and merged it into FormType
+    The "field_widget" and all references to it should be renamed to
+    "form_widget_single_control":
 
-  * [BC BREAK] renamed "field_*" theme blocks to "form_*" and "field_widget" to
-    "input"
+    Before:
+
+    ```
+    {% block url_widget %}
+    {% spaceless %}
+        {% set type = type|default('url') %}
+        {{ block('field_widget') }}
+    {% endspaceless %}
+    {% endblock url_widget %}
+    ```
+
+    After:
+
+    ```
+    {% block url_widget %}
+    {% spaceless %}
+        {% set type = type|default('url') %}
+        {{ block('form_widget_single_control') }}
+    {% endspaceless %}
+    {% endblock url_widget %}
+    ```
+
+    All other "field_*" blocks and references to them should be renamed to
+    "form_*". If you previously defined both a "field_*" and a "form_*"
+    block, you can merge them into a single "form_*" block and check the new
+    Boolean variable "single_control":
+
+    Before:
+
+    ```
+    {% block form_errors %}
+    {% spaceless %}
+        ... form code ...
+    {% endspaceless %}
+    {% endblock form_errors %}
+
+    {% block field_errors %}
+    {% spaceless %}
+        ... field code ...
+    {% endspaceless %}
+    {% endblock field_errors %}
+    ```
+
+    After:
+
+    ```
+    {% block form_errors %}
+    {% spaceless %}
+        {% if single_control %}
+            ... field code ...
+        {% else %}
+            ... form code ...
+        {% endif %}
+    {% endspaceless %}
+    {% endblock form_errors %}
+    ```
+
+    Furthermore, the block "generic_label" was merged into "form_label". You
+    should now override "form_label" in order to customize labels.
+
+    Last but not least, the block "widget_choice_options" was renamed to
+    "choice_widget_options" to be consistent with the rest of the default
+    theme.
+
+  * The method `guessMinLength()` of FormTypeGuesserInterface was deprecated
+    and will be removed in Symfony 2.3. You should use the new method
+    `guessPattern()` instead which may return any regular expression that
+    is inserted in the HTML5 attribute "pattern".
+
+    Before:
+
+    public function guessMinLength($class, $property)
+    {
+        if (/* condition */) {
+            return new ValueGuess($minLength, Guess::LOW_CONFIDENCE);
+        }
+    }
+
+    After:
+
+    public function guessPattern($class, $property)
+    {
+        if (/* condition */) {
+            return new ValueGuess('.{' . $minLength . ',}', Guess::LOW_CONFIDENCE);
+        }
+    }
 
 ### Validator
 
@@ -447,7 +532,7 @@
     `validate` and its return value was dropped.
 
     `ConstraintValidator` still contains the deprecated `isValid` method and
-    forwards `validate` calls to `isValid` by default. This BC layer will be 
+    forwards `validate` calls to `isValid` by default. This BC layer will be
     removed in Symfony 2.3. You are advised to rename your methods. You should
     also remove the return values, which have never been used by the framework.
 
@@ -477,7 +562,7 @@
             $this->context->addViolation($constraint->message, array(
                 '{{ value }}' => $value,
             ));
-            
+
             return;
         }
     }
@@ -532,7 +617,7 @@
 
 ### Serializer
 
- * The key names craeted by the  `GetSetMethodNormalizer` have changed from
+ * The key names created by the  `GetSetMethodNormalizer` have changed from
     from all lowercased to camelCased (e.g. `mypropertyvalue` to `myPropertyValue`).
 
  * The `item` element is now converted to an array when deserializing XML.

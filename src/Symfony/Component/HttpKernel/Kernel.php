@@ -27,7 +27,6 @@ use Symfony\Component\HttpKernel\Bundle\BundleInterface;
 use Symfony\Component\HttpKernel\Config\FileLocator;
 use Symfony\Component\HttpKernel\DependencyInjection\MergeExtensionConfigurationPass;
 use Symfony\Component\HttpKernel\DependencyInjection\AddClassesToCachePass;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension as DIExtension;
 use Symfony\Component\HttpKernel\Debug\ErrorHandler;
 use Symfony\Component\HttpKernel\Debug\ExceptionHandler;
 use Symfony\Component\Config\Loader\LoaderResolver;
@@ -59,7 +58,12 @@ abstract class Kernel implements KernelInterface, TerminableInterface
     protected $classes;
     protected $errorReportingLevel;
 
-    const VERSION = '2.1.0-DEV';
+    const VERSION         = '2.1.0-DEV';
+    const VERSION_ID      = '20100';
+    const MAJOR_VERSION   = '2';
+    const MINOR_VERSION   = '1';
+    const RELEASE_VERSION = '0';
+    const EXTRA_VERSION   = 'DEV';
 
     /**
      * Constructor.
@@ -409,8 +413,8 @@ abstract class Kernel implements KernelInterface, TerminableInterface
     /**
      * Loads the PHP class cache.
      *
-     * @param string  $name      The cache name prefix
-     * @param string  $extension File extension of the resulting file
+     * @param string $name      The cache name prefix
+     * @param string $extension File extension of the resulting file
      */
     public function loadClassCache($name = 'classes', $extension = '.php')
     {

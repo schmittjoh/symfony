@@ -92,7 +92,7 @@ class ParameterBag implements \IteratorAggregate, \Countable
      *
      * @param string  $path    The key
      * @param mixed   $default The default value if the parameter key does not exist
-     * @param boolean $deep If true, a path like foo[bar] will find deeper items
+     * @param boolean $deep    If true, a path like foo[bar] will find deeper items
      *
      * @api
      */
@@ -109,7 +109,7 @@ class ParameterBag implements \IteratorAggregate, \Countable
 
         $value = $this->parameters[$root];
         $currentKey = null;
-        for ($i=$pos,$c=strlen($path); $i<$c; $i++) {
+        for ($i = $pos, $c = strlen($path); $i < $c; $i++) {
             $char = $path[$i];
 
             if ('[' === $char) {
@@ -189,7 +189,7 @@ class ParameterBag implements \IteratorAggregate, \Countable
      *
      * @param string  $key     The parameter key
      * @param mixed   $default The default value if the parameter key does not exist
-     * @param boolean $deep If true, a path like foo[bar] will find deeper items
+     * @param boolean $deep    If true, a path like foo[bar] will find deeper items
      *
      * @return string The filtered value
      *
@@ -205,7 +205,7 @@ class ParameterBag implements \IteratorAggregate, \Countable
      *
      * @param string  $key     The parameter key
      * @param mixed   $default The default value if the parameter key does not exist
-     * @param boolean $deep If true, a path like foo[bar] will find deeper items
+     * @param boolean $deep    If true, a path like foo[bar] will find deeper items
      *
      * @return string The filtered value
      *
@@ -221,7 +221,7 @@ class ParameterBag implements \IteratorAggregate, \Countable
      *
      * @param string  $key     The parameter key
      * @param mixed   $default The default value if the parameter key does not exist
-     * @param boolean $deep If true, a path like foo[bar] will find deeper items
+     * @param boolean $deep    If true, a path like foo[bar] will find deeper items
      *
      * @return string The filtered value
      *
@@ -238,9 +238,9 @@ class ParameterBag implements \IteratorAggregate, \Countable
      *
      * @param string  $key     The parameter key
      * @param mixed   $default The default value if the parameter key does not exist
-     * @param boolean $deep If true, a path like foo[bar] will find deeper items
+     * @param boolean $deep    If true, a path like foo[bar] will find deeper items
      *
-     * @return string The filtered value
+     * @return integer The filtered value
      *
      * @api
      */

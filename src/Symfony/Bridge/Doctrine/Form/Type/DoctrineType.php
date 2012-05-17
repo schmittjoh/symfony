@@ -19,7 +19,7 @@ use Symfony\Bridge\Doctrine\Form\ChoiceList\EntityLoaderInterface;
 use Symfony\Bridge\Doctrine\Form\EventListener\MergeDoctrineCollectionListener;
 use Symfony\Bridge\Doctrine\Form\DataTransformer\CollectionToArrayTransformer;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Options;
+use Symfony\Component\OptionsResolver\Options;
 
 abstract class DoctrineType extends AbstractType
 {
@@ -87,7 +87,8 @@ abstract class DoctrineType extends AbstractType
      * Return the default loader object.
      *
      * @param ObjectManager $manager
-     * @param array $options
+     * @param mixed $queryBuilder
+     * @param string $class
      * @return EntityLoaderInterface
      */
     abstract public function getLoader(ObjectManager $manager, $queryBuilder, $class);

@@ -115,7 +115,7 @@ class ParameterBag implements ParameterBagInterface
     /**
      * Returns true if a parameter name is defined.
      *
-     * @param  string  $name       The parameter name
+     * @param string $name The parameter name
      *
      * @return Boolean true if the parameter name is defined, false otherwise
      *
@@ -124,6 +124,18 @@ class ParameterBag implements ParameterBagInterface
     public function has($name)
     {
         return array_key_exists(strtolower($name), $this->parameters);
+    }
+
+    /**
+     * Removes a parameter.
+     *
+     * @param string $key The key
+     *
+     * @api
+     */
+    public function remove($key)
+    {
+        unset($this->parameters[$key]);
     }
 
     /**
@@ -154,7 +166,7 @@ class ParameterBag implements ParameterBagInterface
     /**
      * Replaces parameter placeholders (%name%) by their values.
      *
-     * @param mixed $value A value
+     * @param mixed $value     A value
      * @param array $resolving An array of keys that are being resolved (used internally to detect circular references)
      *
      * @return mixed The resolved value

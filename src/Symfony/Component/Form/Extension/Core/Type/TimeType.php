@@ -20,6 +20,7 @@ use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToStringTransf
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToTimestampTransformer;
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToArrayTransformer;
 use Symfony\Component\Form\FormView;
+use Symfony\Component\OptionsResolver\Options;
 
 class TimeType extends AbstractType
 {
@@ -129,6 +130,10 @@ class TimeType extends AbstractType
             ->set('widget', $form->getAttribute('widget'))
             ->set('with_seconds', $form->getAttribute('with_seconds'))
         ;
+
+        if ('single_text' === $form->getAttribute('widget')) {
+            $view->set('type', 'time');
+        }
     }
 
     /**
@@ -136,6 +141,10 @@ class TimeType extends AbstractType
      */
     public function getDefaultOptions()
     {
+        $singleControl = function (Options $options) {
+            return $options['widget'] === 'single_text';
+        };
+
         return array(
             'hours'          => range(0, 23),
             'minutes'        => range(0, 59),
@@ -155,6 +164,7 @@ class TimeType extends AbstractType
             // representation is not \DateTime, but an array, we need to unset
             // this option.
             'data_class'     => null,
+            'single_control'      => $singleControl,
         );
     }
 

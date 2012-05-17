@@ -14,6 +14,7 @@ namespace Symfony\Bridge\Monolog\Tests\Processor;
 use Monolog\Logger;
 use Symfony\Bridge\Monolog\Processor\WebProcessor;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 class WebProcessorTest extends \PHPUnit_Framework_TestCase
 {
@@ -30,17 +31,32 @@ class WebProcessorTest extends \PHPUnit_Framework_TestCase
             'REQUEST_URI'    => 'A',
             'REMOTE_ADDR'    => 'B',
             'REQUEST_METHOD' => 'C',
+            'SERVER_NAME'    => 'D',
+            'HTTP_REFERER'   => 'E'
         );
 
         $request = new Request();
         $request->server->replace($server);
 
-        $processor = new WebProcessor($request);
+        $event = $this->getMockBuilder('Symfony\Component\HttpKernel\Event\GetResponseEvent')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $event->expects($this->any())
+            ->method('getRequestType')
+            ->will($this->returnValue(HttpKernelInterface::MASTER_REQUEST));
+        $event->expects($this->any())
+            ->method('getRequest')
+            ->will($this->returnValue($request));
+
+        $processor = new WebProcessor();
+        $processor->onKernelRequest($event);
         $record = $processor($this->getRecord());
 
         $this->assertEquals($server['REQUEST_URI'], $record['extra']['url']);
         $this->assertEquals($server['REMOTE_ADDR'], $record['extra']['ip']);
         $this->assertEquals($server['REQUEST_METHOD'], $record['extra']['http_method']);
+        $this->assertEquals($server['SERVER_NAME'], $record['extra']['server']);
+        $this->assertEquals($server['HTTP_REFERER'], $record['extra']['referrer']);
     }
 
     /**

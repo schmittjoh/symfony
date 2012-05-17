@@ -26,7 +26,7 @@ namespace Symfony\Component\Finder;
  *
  * @api
  */
-class Finder implements \IteratorAggregate
+class Finder implements \IteratorAggregate, \Countable
 {
     const IGNORE_VCS_FILES = 1;
     const IGNORE_DOT_FILES = 2;
@@ -44,6 +44,8 @@ class Finder implements \IteratorAggregate
     private $dirs        = array();
     private $dates       = array();
     private $iterators   = array();
+    private $contains    = array();
+    private $notContains = array();
 
     static private $vcsPatterns = array('.svn', '_svn', 'CVS', '_darcs', '.arch-params', '.monotone', '.bzr', '.git', '.hg');
 
@@ -103,7 +105,7 @@ class Finder implements \IteratorAggregate
      *   $finder->depth('> 1') // the Finder will start matching at level 1.
      *   $finder->depth('< 3') // the Finder will descend at most 3 levels of directories below the starting point.
      *
-     * @param  int $level The depth level expression
+     * @param int $level The depth level expression
      *
      * @return Finder The current Finder instance
      *
@@ -129,7 +131,7 @@ class Finder implements \IteratorAggregate
      *   $finder->date('> now - 2 hours');
      *   $finder->date('>= 2005-10-15');
      *
-     * @param  string $date A date rage string
+     * @param string $date A date rage string
      *
      * @return Finder The current Finder instance
      *
@@ -155,7 +157,7 @@ class Finder implements \IteratorAggregate
      * $finder->name('/\.php$/') // same as above
      * $finder->name('test.php')
      *
-     * @param  string $pattern A pattern (a regexp, a glob, or a string)
+     * @param string $pattern A pattern (a regexp, a glob, or a string)
      *
      * @return Finder The current Finder instance
      *
@@ -173,7 +175,7 @@ class Finder implements \IteratorAggregate
     /**
      * Adds rules that files must not match.
      *
-     * @param  string $pattern A pattern (a regexp, a glob, or a string)
+     * @param string $pattern A pattern (a regexp, a glob, or a string)
      *
      * @return Finder The current Finder instance
      *
@@ -184,6 +186,49 @@ class Finder implements \IteratorAggregate
     public function notName($pattern)
     {
         $this->notNames[] = $pattern;
+
+        return $this;
+    }
+
+    /**
+     * Adds tests that file contents must match.
+     *
+     * Strings or PCRE patterns can be used:
+     *
+     * $finder->contains('Lorem ipsum')
+     * $finder->contains('/Lorem ipsum/i')
+     *
+     * @param string $pattern A pattern (string or regexp)
+     *
+     * @return Finder The current Finder instance
+     *
+     * @see Symfony\Component\Finder\Iterator\FilecontentFilterIterator
+     */
+    public function contains($pattern)
+    {
+        $this->contains[] = $pattern;
+
+        return $this;
+    }
+
+    /**
+     * Adds tests that file contents must not match.
+     *
+     * Strings or PCRE patterns can be used:
+     *
+     * $finder->notContains('Lorem ipsum')
+     * $finder->notContains('/Lorem ipsum/i')
+
+     *
+     * @param string $pattern A pattern (string or regexp)
+     *
+     * @return Finder The current Finder instance
+     *
+     * @see Symfony\Component\Finder\Iterator\FilecontentFilterIterator
+     */
+    public function notContains($pattern)
+    {
+        $this->notContains[] = $pattern;
 
         return $this;
     }
@@ -214,7 +259,7 @@ class Finder implements \IteratorAggregate
     /**
      * Excludes directories.
      *
-     * @param  string|array $dirs A directory path or an array of directories
+     * @param string|array $dirs A directory path or an array of directories
      *
      * @return Finder The current Finder instance
      *
@@ -275,7 +320,7 @@ class Finder implements \IteratorAggregate
 
     static public function addVCSPattern($pattern)
     {
-        static::$vcsPatterns[] = $pattern;
+        self::$vcsPatterns[] = $pattern;
     }
 
     /**
@@ -285,7 +330,7 @@ class Finder implements \IteratorAggregate
      *
      * This can be slow as all the matching files and directories must be retrieved for comparison.
      *
-     * @param  Closure $closure An anonymous function
+     * @param Closure $closure An anonymous function
      *
      * @return Finder The current Finder instance
      *
@@ -404,7 +449,7 @@ class Finder implements \IteratorAggregate
      * The anonymous function receives a \SplFileInfo and must return false
      * to remove files.
      *
-     * @param  Closure $closure An anonymous function
+     * @param Closure $closure An anonymous function
      *
      * @return Finder The current Finder instance
      *
@@ -436,7 +481,7 @@ class Finder implements \IteratorAggregate
     /**
      * Searches files and directories which match defined rules.
      *
-     * @param  string|array $dirs A directory path or an array of directories
+     * @param string|array $dirs A directory path or an array of directories
      *
      * @return Finder The current Finder instance
      *
@@ -514,6 +559,16 @@ class Finder implements \IteratorAggregate
         }
     }
 
+    /**
+     * Counts all the results collected by the iterators.
+     *
+     * @return int
+     */
+    public function count()
+    {
+        return iterator_count($this->getIterator());
+    }
+
     private function searchInDirectory($dir)
     {
         $flags = \RecursiveDirectoryIterator::SKIP_DOTS;
@@ -536,7 +591,7 @@ class Finder implements \IteratorAggregate
         }
 
         if (static::IGNORE_VCS_FILES === (static::IGNORE_VCS_FILES & $this->ignore)) {
-            $this->exclude = array_merge($this->exclude, static::$vcsPatterns);
+            $this->exclude = array_merge($this->exclude, self::$vcsPatterns);
         }
 
         if (static::IGNORE_DOT_FILES === (static::IGNORE_DOT_FILES & $this->ignore)) {
@@ -549,6 +604,10 @@ class Finder implements \IteratorAggregate
 
         if ($this->names || $this->notNames) {
             $iterator = new Iterator\FilenameFilterIterator($iterator, $this->names, $this->notNames);
+        }
+
+        if ($this->contains || $this->notContains) {
+            $iterator = new Iterator\FilecontentFilterIterator($iterator, $this->contains, $this->notContains);
         }
 
         if ($this->sizes) {

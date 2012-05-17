@@ -13,12 +13,8 @@ namespace Symfony\Component\Form\Extension\Core\EventListener;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Form\FormEvents;
-use Symfony\Component\Form\Event\DataEvent;
 use Symfony\Component\Form\Event\FilterDataEvent;
 use Symfony\Component\Form\Exception\UnexpectedTypeException;
-use Symfony\Component\Form\Exception\FormException;
-use Symfony\Component\Form\Util\FormUtil;
-use Symfony\Component\Form\Util\PropertyPath;
 
 /**
  * @author Bernhard Schussek <bschussek@gmail.com>
@@ -40,9 +36,9 @@ class MergeCollectionListener implements EventSubscriberInterface
     /**
      * Creates a new listener.
      *
-     * @param  Boolean $allowAdd      Whether values might be added to the
+     * @param Boolean $allowAdd Whether values might be added to the
      *                                collection.
-     * @param  Boolean $allowDelete   Whether values might be removed from the
+     * @param Boolean $allowDelete Whether values might be removed from the
      *                                collection.
      */
     public function __construct($allowAdd = false, $allowDelete = false)

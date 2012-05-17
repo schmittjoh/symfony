@@ -197,7 +197,7 @@ class PhpEngine implements EngineInterface, \ArrayAccess
     /**
      * Returns true if the helper is defined.
      *
-     * @param string  $name The helper name
+     * @param string $name The helper name
      *
      * @return Boolean true if the helper is defined, false otherwise
      *
@@ -279,7 +279,7 @@ class PhpEngine implements EngineInterface, \ArrayAccess
     /**
      * Returns true if the helper if defined.
      *
-     * @param string  $name The helper name
+     * @param string $name The helper name
      *
      * @return Boolean true if the helper is defined, false otherwise
      *
@@ -313,7 +313,7 @@ class PhpEngine implements EngineInterface, \ArrayAccess
     /**
      * Decorates the current template with another one.
      *
-     * @param string $template  The decorator logical name
+     * @param string $template The decorator logical name
      *
      * @api
      */
@@ -507,10 +507,10 @@ class PhpEngine implements EngineInterface, \ArrayAccess
      */
     public function convertEncoding($string, $to, $from)
     {
-        if (function_exists('iconv')) {
-            return iconv($from, $to, $string);
-        } elseif (function_exists('mb_convert_encoding')) {
+        if (function_exists('mb_convert_encoding')) {
             return mb_convert_encoding($string, $to, $from);
+        } elseif (function_exists('iconv')) {
+            return iconv($from, $to, $string);
         }
 
         throw new \RuntimeException('No suitable convert encoding function (use UTF-8 as your encoding or install the iconv or mbstring extension).');

@@ -155,7 +155,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
 
         $this->assertMatchesXpath($html,
 '/label
-    [@class=" required"]
+    [@class="required"]
     [.="[trans]Name[/trans]"]
 '
         );
@@ -204,11 +204,28 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function testLabelWithCustomOptionsPassedDirectly()
+    public function testLabelDoesNotRenderFieldAttributes()
     {
         $form = $this->factory->createNamed('text', 'name');
         $html = $this->renderLabel($form->createView(), null, array(
             'attr' => array(
+                'class' => 'my&class'
+            ),
+        ));
+
+        $this->assertMatchesXpath($html,
+'/label
+    [@for="name"]
+    [@class="required"]
+'
+        );
+    }
+
+    public function testLabelWithCustomOptionsPassedDirectly()
+    {
+        $form = $this->factory->createNamed('text', 'name');
+        $html = $this->renderLabel($form->createView(), null, array(
+            'label_attr' => array(
                 'class' => 'my&class'
             ),
         ));
@@ -225,7 +242,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     {
         $form = $this->factory->createNamed('text', 'name');
         $html = $this->renderLabel($form->createView(), 'Custom label', array(
-            'attr' => array(
+            'label_attr' => array(
                 'class' => 'my&class'
             ),
         ));
@@ -930,12 +947,12 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
 '/div
     [
         ./input
-            [@type="text"]
+            [@type="date"]
             [@id="name_date"]
             [@name="name[date]"]
             [@value="Feb 3, 2011"]
         /following-sibling::input
-            [@type="text"]
+            [@type="time"]
             [@id="name_time"]
             [@name="name[time]"]
             [@value="04:05"]
@@ -953,7 +970,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
 
         $this->assertWidgetMatchesXpath($form->createView(), array(),
 '/input
-    [@type="text"]
+    [@type="datetime"]
     [@name="name"]
     [@value="2011-02-03 04:05"]
 '
@@ -971,7 +988,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
 
         $this->assertWidgetMatchesXpath($form->createView(), array(),
 '/input
-    [@type="text"]
+    [@type="datetime"]
     [@name="name"]
     [@value="2011-02-03 04:05"]
 '
@@ -1094,7 +1111,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
 
         $this->assertWidgetMatchesXpath($form->createView(), array(),
 '/input
-    [@type="text"]
+    [@type="date"]
     [@name="name"]
     [@value="Feb 3, 2011"]
 '
@@ -1569,7 +1586,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
 
         $this->assertWidgetMatchesXpath($form->createView(), array(),
 '/input
-    [@type="text"]
+    [@type="time"]
     [@name="name"]
     [@value="04:05"]
 '

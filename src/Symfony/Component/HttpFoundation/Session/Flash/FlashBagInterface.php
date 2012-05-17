@@ -26,7 +26,7 @@ interface FlashBagInterface extends SessionBagInterface
      * @param string $type
      * @param string $message
      */
-    public function add($type, $message);
+    function add($type, $message);
 
     /**
      * Registers a message for a given type.
@@ -57,7 +57,7 @@ interface FlashBagInterface extends SessionBagInterface
      * Gets and clears flash from the stack.
      *
      * @param string $type
-     * @param array  $default Default value if $type doee not exist.
+     * @param array $default Default value if $type doee not exist.
      *
      * @return string
      */

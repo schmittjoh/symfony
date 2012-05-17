@@ -63,7 +63,7 @@ class ProfilerController extends ContainerAware
     /**
      * Exports data for a given token.
      *
-     * @param string $token    The profiler token
+     * @param string $token The profiler token
      *
      * @return Response A Response instance
      */
@@ -183,7 +183,6 @@ class ProfilerController extends ContainerAware
             'profile'      => $profile,
             'templates'    => $this->getTemplates($profiler),
             'profiler_url' => $url,
-            'verbose'      => $this->container->get('web_profiler.debug_toolbar')->isVerbose()
         ));
     }
 
@@ -290,6 +289,23 @@ class ProfilerController extends ContainerAware
             'url'    => $url,
             'limit'  => $limit,
         )));
+    }
+
+    /**
+     * Displays the PHP info.
+     *
+     * @return Response A Response instance
+     */
+    public function phpinfoAction()
+    {
+        $profiler = $this->container->get('profiler');
+        $profiler->disable();
+
+        ob_start();
+        phpinfo();
+        $phpinfo = ob_get_clean();
+
+        return new Response($phpinfo);
     }
 
     protected function getTemplateNames($profiler)

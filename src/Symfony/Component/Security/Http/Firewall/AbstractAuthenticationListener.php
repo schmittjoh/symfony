@@ -67,16 +67,15 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
     /**
      * Constructor.
      *
-     * @param SecurityContextInterface               $securityContext       A SecurityContext instance
-     * @param AuthenticationManagerInterface         $authenticationManager An AuthenticationManagerInterface instance
+     * @param SecurityContextInterface       $securityContext       A SecurityContext instance
+     * @param AuthenticationManagerInterface $authenticationManager An AuthenticationManagerInterface instance
      * @param SessionAuthenticationStrategyInterface $sessionStrategy
-     * @param HttpUtils                              $httpUtils             An HttpUtilsInterface instance
+     * @param HttpUtils $httpUtils An HttpUtilsInterface instance
      * @param string                                 $providerKey
-     *                                                                      successful, or failed authentication attempt
      * @param AuthenticationSuccessHandlerInterface  $successHandler
      * @param AuthenticationFailureHandlerInterface  $failureHandler
-     * @param LoggerInterface                        $logger                A LoggerInterface instance
-     * @param EventDispatcherInterface               $dispatcher            An EventDispatcherInterface instance
+     * @param LoggerInterface          $logger     A LoggerInterface instance
+     * @param EventDispatcherInterface $dispatcher An EventDispatcherInterface instance
      */
     public function __construct(SecurityContextInterface $securityContext, AuthenticationManagerInterface $authenticationManager, SessionAuthenticationStrategyInterface $sessionStrategy, HttpUtils $httpUtils, $providerKey, AuthenticationSuccessHandlerInterface $successHandler, AuthenticationFailureHandlerInterface $failureHandler, LoggerInterface $logger = null, EventDispatcherInterface $dispatcher = null)
     {
@@ -140,7 +139,7 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
 
         try {
             if (!$request->hasPreviousSession()) {
-                throw new SessionUnavailableException('Your session has timed-out, or you have disabled cookies.');
+                throw new SessionUnavailableException('Your session has timed out, or you have disabled cookies.');
             }
 
             if (null === $returnValue = $this->attemptAuthentication($request)) {
@@ -206,7 +205,7 @@ abstract class AbstractAuthenticationListener implements ListenerInterface
     /**
      * Performs authentication.
      *
-     * @param  Request $request A Request instance
+     * @param Request $request A Request instance
      *
      * @return TokenInterface The authenticated token, or null if full authentication is not possible
      *

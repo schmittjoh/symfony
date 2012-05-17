@@ -14,7 +14,7 @@ namespace Symfony\Component\Form;
 use Symfony\Component\Form\Exception\FormException;
 use Symfony\Component\Form\Exception\UnexpectedTypeException;
 use Symfony\Component\Form\Exception\TypeDefinitionException;
-use Symfony\Component\Form\Exception\CreationException;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class FormFactory implements FormFactoryInterface
 {
@@ -125,10 +125,10 @@ class FormFactory implements FormFactoryInterface
      *
      * @see createBuilder()
      *
-     * @param string|FormTypeInterface  $type       The type of the form
-     * @param mixed                     $data       The initial data
-     * @param array                     $options    The options
-     * @param FormBuilder               $parent     The parent builder
+     * @param string|FormTypeInterface $type    The type of the form
+     * @param mixed                    $data    The initial data
+     * @param array                    $options The options
+     * @param FormBuilder              $parent  The parent builder
      *
      * @return Form The form named after the type
      *
@@ -144,11 +144,11 @@ class FormFactory implements FormFactoryInterface
      *
      * @see createNamedBuilder()
      *
-     * @param string|FormTypeInterface  $type       The type of the form
-     * @param string                    $name       The name of the form
-     * @param mixed                     $data       The initial data
-     * @param array                     $options    The options
-     * @param FormBuilder               $parent     The parent builder
+     * @param string|FormTypeInterface $type    The type of the form
+     * @param string                   $name    The name of the form
+     * @param mixed                    $data    The initial data
+     * @param array                    $options The options
+     * @param FormBuilder              $parent  The parent builder
      *
      * @return Form The form
      *
@@ -164,11 +164,11 @@ class FormFactory implements FormFactoryInterface
      *
      * @see createBuilderForProperty()
      *
-     * @param string       $class     The fully qualified class name
-     * @param string       $property  The name of the property to guess for
-     * @param mixed        $data      The initial data
-     * @param array        $options   The options for the builder
-     * @param FormBuilder  $parent    The parent builder
+     * @param string      $class    The fully qualified class name
+     * @param string      $property The name of the property to guess for
+     * @param mixed       $data     The initial data
+     * @param array       $options  The options for the builder
+     * @param FormBuilder $parent   The parent builder
      *
      * @return Form The form named after the property
      *
@@ -182,10 +182,10 @@ class FormFactory implements FormFactoryInterface
     /**
      * Returns a form builder
      *
-     * @param string|FormTypeInterface  $type       The type of the form
-     * @param mixed                     $data       The initial data
-     * @param array                     $options    The options
-     * @param FormBuilder               $parent     The parent builder
+     * @param string|FormTypeInterface $type    The type of the form
+     * @param mixed                    $data    The initial data
+     * @param array                    $options The options
+     * @param FormBuilder              $parent  The parent builder
      *
      * @return FormBuilder The form builder
      *
@@ -201,11 +201,11 @@ class FormFactory implements FormFactoryInterface
     /**
      * Returns a form builder.
      *
-     * @param string|FormTypeInterface  $type       The type of the form
-     * @param string                    $name       The name of the form
-     * @param mixed                     $data       The initial data
-     * @param array                     $options    The options
-     * @param FormBuilder               $parent     The parent builder
+     * @param string|FormTypeInterface $type    The type of the form
+     * @param string                   $name    The name of the form
+     * @param mixed                    $data    The initial data
+     * @param array                    $options The options
+     * @param FormBuilder              $parent  The parent builder
      *
      * @return FormBuilder The form builder
      *
@@ -221,7 +221,7 @@ class FormFactory implements FormFactoryInterface
         $types = array();
         $optionValues = array();
         $knownOptions = array();
-        $defaultOptions = new DefaultOptions();
+        $optionsResolver = new OptionsResolver();
 
         // Bottom-up determination of the type hierarchy
         // Start with the actual type and look for the parent type
@@ -255,14 +255,14 @@ class FormFactory implements FormFactoryInterface
             // options. Default options of children override default options
             // of parents.
             $typeOptions = $type->getDefaultOptions();
-            $defaultOptions->add($typeOptions);
-            $defaultOptions->addAllowedValues($type->getAllowedOptionValues());
+            $optionsResolver->setDefaults($typeOptions);
+            $optionsResolver->addAllowedValues($type->getAllowedOptionValues());
             $knownOptions = array_merge($knownOptions, array_keys($typeOptions));
 
             foreach ($type->getExtensions() as $typeExtension) {
                 $extensionOptions = $typeExtension->getDefaultOptions();
-                $defaultOptions->add($extensionOptions);
-                $defaultOptions->addAllowedValues($typeExtension->getAllowedOptionValues());
+                $optionsResolver->setDefaults($extensionOptions);
+                $optionsResolver->addAllowedValues($typeExtension->getAllowedOptionValues());
                 $knownOptions = array_merge($knownOptions, array_keys($extensionOptions));
             }
         }
@@ -278,7 +278,7 @@ class FormFactory implements FormFactoryInterface
         }
 
         // Resolve options
-        $options = $defaultOptions->resolve($options);
+        $options = $optionsResolver->resolve($options);
 
         for ($i = 0, $l = count($types); $i < $l && !$builder; ++$i) {
             $builder = $types[$i]->createBuilder($name, $this, $options);
@@ -307,14 +307,14 @@ class FormFactory implements FormFactoryInterface
     /**
      * Returns a form builder for a property of a class.
      *
-     * If any of the 'max_length', 'required' and type options can be guessed,
+     * If any of the 'max_length', 'required', 'pattern' and type options can be guessed,
      * and are not provided in the options argument, the guessed value is used.
      *
-     * @param string       $class     The fully qualified class name
-     * @param string       $property  The name of the property to guess for
-     * @param mixed        $data      The initial data
-     * @param array        $options   The options for the builder
-     * @param FormBuilder  $parent    The parent builder
+     * @param string      $class    The fully qualified class name
+     * @param string      $property The name of the property to guess for
+     * @param mixed       $data     The initial data
+     * @param array       $options  The options for the builder
+     * @param FormBuilder $parent   The parent builder
      *
      * @return FormBuilder The form builder named after the property
      *
@@ -328,20 +328,27 @@ class FormFactory implements FormFactoryInterface
 
         $typeGuess = $this->guesser->guessType($class, $property);
         $maxLengthGuess = $this->guesser->guessMaxLength($class, $property);
+        // Keep $minLengthGuess for BC until Symfony 2.3
         $minLengthGuess = $this->guesser->guessMinLength($class, $property);
         $requiredGuess = $this->guesser->guessRequired($class, $property);
+        $patternGuess = $this->guesser->guessPattern($class, $property);
 
         $type = $typeGuess ? $typeGuess->getType() : 'text';
 
         $maxLength = $maxLengthGuess ? $maxLengthGuess->getValue() : null;
         $minLength = $minLengthGuess ? $minLengthGuess->getValue() : null;
-        $minLength = $minLength ?: 0;
+        $pattern   = $patternGuess ? $patternGuess->getValue() : null;
+
+        // overrides $minLength, if set
+        if (null !== $pattern) {
+            $options = array_merge(array('pattern' => $pattern), $options);
+        }
 
         if (null !== $maxLength) {
             $options = array_merge(array('max_length' => $maxLength), $options);
         }
 
-        if ($minLength > 0) {
+        if (null !== $minLength && $minLength > 0) {
             $options = array_merge(array('pattern' => '.{'.$minLength.','.$maxLength.'}'), $options);
         }
 

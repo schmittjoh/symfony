@@ -21,6 +21,7 @@ use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToArrayTransfo
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToStringTransformer;
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToTimestampTransformer;
 use Symfony\Component\Form\Extension\Core\DataTransformer\ArrayToPartsTransformer;
+use Symfony\Component\OptionsResolver\Options;
 
 class DateTimeType extends AbstractType
 {
@@ -123,6 +124,10 @@ class DateTimeType extends AbstractType
     public function buildView(FormView $view, FormInterface $form)
     {
         $view->set('widget', $form->getAttribute('widget'));
+
+        if ('single_text' === $form->getAttribute('widget')) {
+            $view->set('type', 'datetime');
+        }
     }
 
     /**
@@ -130,6 +135,10 @@ class DateTimeType extends AbstractType
      */
     public function getDefaultOptions()
     {
+        $singleControl = function (Options $options) {
+            return $options['widget'] === 'single_text';
+        };
+
         return array(
             'input'         => 'datetime',
             'data_timezone' => null,
@@ -158,6 +167,7 @@ class DateTimeType extends AbstractType
             // representation is not \DateTime, but an array, we need to unset
             // this option.
             'data_class'    => null,
+            'single_control'     => $singleControl,
         );
     }
 

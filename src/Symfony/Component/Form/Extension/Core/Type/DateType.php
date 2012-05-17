@@ -11,18 +11,18 @@
 
 namespace Symfony\Component\Form\Extension\Core\Type;
 
-use Symfony\Component\Form\Extension\Core\ChoiceList\ChoiceList;
-
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormBuilder;
 use Symfony\Component\Form\Exception\CreationException;
 use Symfony\Component\Form\FormView;
+use Symfony\Component\Form\Extension\Core\ChoiceList\ChoiceList;
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToLocalizedStringTransformer;
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToArrayTransformer;
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToStringTransformer;
 use Symfony\Component\Form\Extension\Core\DataTransformer\DateTimeToTimestampTransformer;
 use Symfony\Component\Form\ReversedTransformer;
+use Symfony\Component\OptionsResolver\Options;
 
 class DateType extends AbstractType
 {
@@ -142,6 +142,10 @@ class DateType extends AbstractType
     {
         $view->set('widget', $form->getAttribute('widget'));
 
+        if ('single_text' === $form->getAttribute('widget')) {
+            $view->set('type', 'date');
+        }
+
         if ($view->hasChildren()) {
             $pattern = $form->getAttribute('formatter')->getPattern();
 
@@ -163,6 +167,10 @@ class DateType extends AbstractType
      */
     public function getDefaultOptions()
     {
+        $singleControl = function (Options $options) {
+            return $options['widget'] === 'single_text';
+        };
+
         return array(
             'years'          => range(date('Y') - 5, date('Y') + 5),
             'months'         => range(1, 12),
@@ -182,6 +190,7 @@ class DateType extends AbstractType
             // representation is not \DateTime, but an array, we need to unset
             // this option.
             'data_class'     => null,
+            'single_control'      => $singleControl,
         );
     }
 

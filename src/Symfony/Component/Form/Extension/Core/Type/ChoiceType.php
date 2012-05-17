@@ -12,7 +12,6 @@
 namespace Symfony\Component\Form\Extension\Core\Type;
 
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Options;
 use Symfony\Component\Form\FormBuilder;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
@@ -27,6 +26,7 @@ use Symfony\Component\Form\Extension\Core\DataTransformer\ChoiceToValueTransform
 use Symfony\Component\Form\Extension\Core\DataTransformer\ChoiceToBooleanArrayTransformer;
 use Symfony\Component\Form\Extension\Core\DataTransformer\ChoicesToValuesTransformer;
 use Symfony\Component\Form\Extension\Core\DataTransformer\ChoicesToBooleanArrayTransformer;
+use Symfony\Component\OptionsResolver\Options;
 
 class ChoiceType extends AbstractType
 {
@@ -165,6 +165,10 @@ class ChoiceType extends AbstractType
             return $options['required'] ? null : '';
         };
 
+        $singleControl = function (Options $options) {
+            return !$options['expanded'];
+        };
+
         return array(
             'multiple'          => false,
             'expanded'          => false,
@@ -174,6 +178,7 @@ class ChoiceType extends AbstractType
             'empty_data'        => $emptyData,
             'empty_value'       => $emptyValue,
             'error_bubbling'    => false,
+            'single_control'         => $singleControl,
         );
     }
 
@@ -196,9 +201,9 @@ class ChoiceType extends AbstractType
     /**
      * Adds the sub fields for an expanded choice field.
      *
-     * @param FormBuilder $builder The form builder.
-     * @param array $choiceViews The choice view objects.
-     * @param array $options The build options.
+     * @param FormBuilder $builder     The form builder.
+     * @param array       $choiceViews The choice view objects.
+     * @param array       $options     The build options.
      */
     private function addSubForms(FormBuilder $builder, array $choiceViews, array $options)
     {

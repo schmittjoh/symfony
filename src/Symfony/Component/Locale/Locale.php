@@ -34,7 +34,7 @@ class Locale extends \Locale
     /**
      * Returns the country names for a locale
      *
-     * @param  string $locale     The locale to use for the country names
+     * @param string $locale The locale to use for the country names
      *
      * @return array              The country names with their codes as keys
      *
@@ -46,7 +46,7 @@ class Locale extends \Locale
             $bundle = \ResourceBundle::create($locale, __DIR__.'/Resources/data/region');
 
             if (null === $bundle) {
-                throw new \RuntimeException('The country resource bundle could not be loaded');
+                throw new \RuntimeException(sprintf('The country resource bundle could not be loaded for locale "%s"', $locale));
             }
 
             $collator = new \Collator($locale);
@@ -89,7 +89,7 @@ class Locale extends \Locale
     /**
      * Returns the language names for a locale
      *
-     * @param  string $locale     The locale to use for the language names
+     * @param string $locale The locale to use for the language names
      *
      * @return array              The language names with their codes as keys
      *
@@ -101,7 +101,7 @@ class Locale extends \Locale
             $bundle = \ResourceBundle::create($locale, __DIR__.'/Resources/data/lang');
 
             if (null === $bundle) {
-                throw new \RuntimeException('The language resource bundle could not be loaded');
+                throw new \RuntimeException(sprintf('The language resource bundle could not be loaded for locale "%s"', $locale));
             }
 
             $collator = new \Collator($locale);
@@ -142,7 +142,7 @@ class Locale extends \Locale
     /**
      * Returns the locale names for a locale
      *
-     * @param  string $locale     The locale to use for the locale names
+     * @param string $locale The locale to use for the locale names
      * @return array              The locale names with their codes as keys
      * @throws RuntimeException   When the resource bundles cannot be loaded
      */
@@ -152,7 +152,7 @@ class Locale extends \Locale
             $bundle = \ResourceBundle::create($locale, __DIR__.'/Resources/data/names');
 
             if (null === $bundle) {
-                throw new \RuntimeException('The locale resource bundle could not be loaded');
+                throw new \RuntimeException(sprintf('The locale resource bundle could not be loaded for locale "%s"', $locale));
             }
 
             $collator = new \Collator($locale);

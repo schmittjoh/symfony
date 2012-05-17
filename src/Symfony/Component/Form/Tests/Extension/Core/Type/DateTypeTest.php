@@ -23,7 +23,7 @@ class DateTypeTest extends LocalizedTestCase
     }
 
     /**
-     * @expectedException Symfony\Component\Form\Exception\FormException
+     * @expectedException Symfony\Component\OptionsResolver\Exception\InvalidOptionsException
      */
     public function testInvalidWidgetOption()
     {
@@ -33,7 +33,7 @@ class DateTypeTest extends LocalizedTestCase
     }
 
     /**
-     * @expectedException Symfony\Component\Form\Exception\FormException
+     * @expectedException Symfony\Component\OptionsResolver\Exception\InvalidOptionsException
      */
     public function testInvalidInputOption()
     {
@@ -535,5 +535,15 @@ class DateTypeTest extends LocalizedTestCase
         // Throws an exception if "data_class" option is not explicitely set
         // to null in the type
         $this->factory->create('date', new \DateTime());
+    }
+
+    public function testSingleTextWidgetShouldUseTheRightInputType()
+    {
+        $form = $this->factory->create('date', null, array(
+            'widget' => 'single_text',
+        ));
+
+        $view = $form->createView();
+        $this->assertEquals('date', $view->get('type'));
     }
 }
