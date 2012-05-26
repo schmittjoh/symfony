@@ -62,6 +62,10 @@ abstract class NodeDefinition implements NodeParentInterface
         return $this;
     }
 
+    // TODO: Remove these two methods once #4425 is merged
+    public function setInfo($info) { return $this->info($info); }
+    public function setExample($example) { return $this->example($example); }
+
     /**
      * Sets info message.
      *
