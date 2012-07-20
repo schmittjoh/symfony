@@ -533,6 +533,11 @@ class Process
         return $this->processInformation['stopsig'];
     }
 
+    public function isStarted()
+    {
+        return self::STATUS_READY !== $this->status;
+    }
+
     /**
      * Checks if the process is currently running.
      *
