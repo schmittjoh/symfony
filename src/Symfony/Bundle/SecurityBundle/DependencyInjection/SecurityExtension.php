@@ -572,13 +572,23 @@ class SecurityExtension extends Extension
     private function createSwitchUserListener($container, $id, $config, $defaultProvider)
     {
         $userProvider = isset($config['provider']) ? $this->getUserProviderId($config['provider']) : $defaultProvider;
-
         $switchUserListenerId = 'security.authentication.switchuser_listener.'.$id;
+
+        if (isset($config['access'])) {
+            $container->register($switchUserListenerId.'.expression', 'JMS\SecurityExtraBundle\Security\Authorization\Expression\Expression')
+                ->addArgument($config['access'])
+                ->setPublic(false);
+
+            $accessPermission = new Reference($switchUserListenerId.'.expression');
+        } else {
+            $accessPermission = $config['role'];
+        }
+
         $listener = $container->setDefinition($switchUserListenerId, new DefinitionDecorator('security.authentication.switchuser_listener'));
         $listener->replaceArgument(1, new Reference($userProvider));
         $listener->replaceArgument(3, $id);
         $listener->replaceArgument(6, $config['parameter']);
-        $listener->replaceArgument(7, $config['role']);
+        $listener->replaceArgument(7, $accessPermission);
 
         return $switchUserListenerId;
     }

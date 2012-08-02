@@ -245,6 +245,7 @@ class MainConfiguration implements ConfigurationInterface
                 ->children()
                     ->scalarNode('provider')->end()
                     ->scalarNode('parameter')->defaultValue('_switch_user')->end()
+                    ->scalarNode('access')->cannotBeEmpty()->end()
                     ->scalarNode('role')->defaultValue('ROLE_ALLOWED_TO_SWITCH')->end()
                 ->end()
             ->end()
