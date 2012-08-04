@@ -559,10 +559,6 @@ class FormBuilder
             throw new UnexpectedTypeException($type, 'string or Symfony\Component\Form\FormTypeInterface');
         }
 
-        if ($this->currentLoadingType && ($type instanceof FormTypeInterface ? $type->getName() : $type) == $this->currentLoadingType) {
-            throw new CircularReferenceException(is_string($type) ? $this->getFormFactory()->getType($type) : $type);
-        }
-
         $this->children[$child] = array(
             'type'      => $type,
             'options'   => $options,
