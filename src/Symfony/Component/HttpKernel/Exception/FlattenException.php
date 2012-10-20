@@ -203,7 +203,7 @@ class FlattenException
         $result = array();
         foreach ($args as $key => $value) {
             if (is_object($value)) {
-                $result[$key] = array('object', get_class($value));
+                $result[$key] = array('object', get_class($value), method_exists($value, '__toString') ? (string) $value : null);
             } elseif (is_array($value)) {
                 if ($level > 10) {
                     $result[$key] = array('array', '*DEEP NESTED ARRAY*');

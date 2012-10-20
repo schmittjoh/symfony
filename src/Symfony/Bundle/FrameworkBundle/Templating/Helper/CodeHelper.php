@@ -90,7 +90,13 @@ class CodeHelper extends Helper
             if ('object' === $item[0]) {
                 $parts = explode('\\', $item[1]);
                 $short = array_pop($parts);
-                $formattedValue = sprintf("<em>object</em>(<abbr title=\"%s\">%s</abbr>)", $item[1], $short);
+
+                $long = $item[1];
+                if (isset($item[2])) {
+                    $long .= ': '.$item[2];
+                }
+
+                $formattedValue = sprintf("<em>object</em>(<abbr title=\"%s\">%s</abbr>)", htmlspecialchars($long, ENT_QUOTES, $this->getCharset()), $short);
             } elseif ('array' === $item[0]) {
                 $formattedValue = sprintf("<em>array</em>(%s)", is_array($item[1]) ? $this->formatArgs($item[1]) : $item[1]);
             } elseif ('string'  === $item[0]) {
