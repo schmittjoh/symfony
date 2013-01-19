@@ -44,17 +44,6 @@ final class Schema extends BaseSchema
         $this->addEntryTable();
     }
 
-    public function addToSchema(BaseSchema $schema)
-    {
-        foreach ($this->getTables() as $table) {
-            $schema->_addTable($table);
-        }
-
-        foreach ($this->getSequences() as $sequence) {
-            $schema->_addSequence($sequence);
-        }
-    }
-
     /**
      * Merges ACL schema with the given schema.
      *
