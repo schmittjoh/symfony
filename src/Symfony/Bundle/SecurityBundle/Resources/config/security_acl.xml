@@ -43,5 +43,11 @@
             <argument type="service" id="logger" on-invalid="null" />
             <tag name="security.voter" priority="255" />
         </service>
+
+        <service id="security.acl.preloader" class="%security.acl.collection.cache.class%">
+            <argument type="service" id="security.acl.provider" />
+            <argument type="service" id="security.acl.object_identity_retrieval_strategy" />
+            <argument type="service" id="security.acl.security_identity_retrieval_strategy" />
+        </service>
     </services>
 </container>
