@@ -100,14 +100,6 @@ class Process
         159 => 'Bad syscall',
     );
 
-    public static function runOrException($cmd, $cwd = null, array $env = null, $stdin = null, $timeout = 60, array $options = array())
-    {
-        $proc = new self($cmd, $cwd, $env, $stdin, $timeout, $options);
-        if (0 !== $proc->run()) {
-            throw new ProcessFailedException($proc);
-        }
-    }
-
     /**
      * Constructor.
      *
