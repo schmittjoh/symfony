@@ -29,6 +29,11 @@ class Yaml
         self::$enablePhpParsing = true;
     }
 
+    static public function setPhpParsing($bool)
+    {
+        self::$enablePhpParsing = (boolean) $bool;
+    }
+
     /**
      * Parses YAML into a PHP array.
      *
