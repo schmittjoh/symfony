@@ -143,6 +143,7 @@
         </service>
         <service id="security.util.secure_random_schema_listener" class="%security.util.secure_random_schema_listener.class%" public="false">
             <argument type="service" id="security.util.secure_random_schema" />
+            <argument type="service" id="doctrine" />
         </service>
 
         <!-- Validator -->
