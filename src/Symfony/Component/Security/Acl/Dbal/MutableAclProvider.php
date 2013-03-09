@@ -13,6 +13,7 @@ namespace Symfony\Component\Security\Acl\Dbal;
 
 use Doctrine\Common\PropertyChangedListener;
 use Doctrine\DBAL\Driver\Connection;
+use Symfony\Component\Security\Acl\Domain\Acl;
 use Symfony\Component\Security\Acl\Domain\RoleSecurityIdentity;
 use Symfony\Component\Security\Acl\Domain\UserSecurityIdentity;
 use Symfony\Component\Security\Acl\Exception\AclAlreadyExistsException;
@@ -244,11 +245,7 @@ class MutableAclProvider extends AclProvider implements MutableAclProviderInterf
                     $sets[] = 'parent_object_identity_id = '.intval($propertyChanges['parentAcl'][1]->getId());
                 }
 
-                $this->regenerateAncestorRelations($acl);
-                $childAcls = $this->findAcls($this->findChildren($acl->getObjectIdentity(), false));
-                foreach ($childAcls as $childOid) {
-                    $this->regenerateAncestorRelations($childAcls[$childOid]);
-                }
+                $this->regenerateAncestorRelations($acl, $propertyChanges['parentAcl'][0], $propertyChanges['parentAcl'][1]);
             }
 
             // this includes only updates of existing ACEs, but neither the creation, nor
@@ -391,6 +388,16 @@ class MutableAclProvider extends AclProvider implements MutableAclProviderInterf
             'DELETE FROM %s WHERE object_identity_id = %d',
             $this->options['oid_ancestors_table_name'],
             $pk
+        );
+    }
+
+    protected function getDeleteObjectIdentityRelationsForParentSql($childOid, $parentOid)
+    {
+        return sprintf(
+            'DELETE FROM %s WHERE object_identity_id = %d AND ancestor_id = %d',
+            $this->options['oid_ancestors_table_name'],
+            $childOid,
+            $parentOid
         );
     }
 
@@ -724,15 +731,31 @@ QUERY;
      *
      * @param AclInterface $acl
      */
-    private function regenerateAncestorRelations(AclInterface $acl)
+    private function regenerateAncestorRelations(Acl $acl, Acl $oldParent = null, Acl $newParent = null)
     {
         $pk = $acl->getId();
-        $this->connection->executeQuery($this->getDeleteObjectIdentityRelationsSql($pk));
-        $this->connection->executeQuery($this->getInsertObjectIdentityRelationSql($pk, $pk));
+        $childAcls = $this->findAcls($this->findChildren($acl->getObjectIdentity(), false));
 
-        $parentAcl = $acl->getParentAcl();
+        // If the old parent was set, we need to delete these relations from the current table.
+        $parentAcl = $oldParent;
+        while (null !== $parentAcl) {
+            $this->connection->executeQuery($this->getDeleteObjectIdentityRelationsForParentSql($pk, $parentAcl->getId()));
+
+            foreach ($childAcls as $childAcl) {
+                $this->connection->executeQuery($this->getDeleteObjectIdentityRelationsForParentSql( $childAcls[$childAcl]->getId(), $parentAcl->getId()));
+            }
+
+            $parentAcl = $parentAcl->getParentAcl();
+        }
+
+        // Now, we are going to add the new parents to the table.
+        $parentAcl = $newParent;
         while (null !== $parentAcl) {
             $this->connection->executeQuery($this->getInsertObjectIdentityRelationSql($pk, $parentAcl->getId()));
+
+            foreach ($childAcls as $childAcl) {
+                $this->connection->executeQuery($this->getInsertObjectIdentityRelationSql($childAcls[$childAcl]->getId(), $parentAcl->getId()));
+            }
 
             $parentAcl = $parentAcl->getParentAcl();
         }
