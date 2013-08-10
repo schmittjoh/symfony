@@ -114,7 +114,7 @@ class Acl implements AuditableAclInterface, NotifyPropertyChanged
     }
 
     /**
-     * {@inheritDoc}
+     * @return Entry[]
      */
     public function getClassAces()
     {
@@ -122,7 +122,7 @@ class Acl implements AuditableAclInterface, NotifyPropertyChanged
     }
 
     /**
-     * {@inheritDoc}
+     * @return Entry[]
      */
     public function getClassFieldAces($field)
     {
@@ -130,7 +130,7 @@ class Acl implements AuditableAclInterface, NotifyPropertyChanged
     }
 
     /**
-     * {@inheritDoc}
+     * @return Entry[]
      */
     public function getObjectAces()
     {
@@ -138,7 +138,7 @@ class Acl implements AuditableAclInterface, NotifyPropertyChanged
     }
 
     /**
-     * {@inheritDoc}
+     * @return Entry[]
      */
     public function getObjectFieldAces($field)
     {
