@@ -30,8 +30,9 @@ class ProcessFailedException extends RuntimeException
 
         parent::__construct(
             sprintf(
-                'The command "%s" failed.\n\nOutput:\n================\n%s\n\nError Output:\n================\n%s',
+                'The command "%s" failed (code: %d).\n\nOutput:\n================\n%s\n\nError Output:\n================\n%s',
                 $process->getCommandLine(),
+                $process->getExitCode(),
                 $process->getOutput(),
                 $process->getErrorOutput()
             )
