@@ -12,10 +12,10 @@
 namespace Symfony\Component\Process\Exception;
 
 /**
- * Marker Interface for the Process Component.
+ * LogicException for the Process Component.
  *
- * @author Johannes M. Schmitt <schmittjoh@gmail.com>
+ * @author Romain Neutron <imprec@gmail.com>
  */
-interface ExceptionInterface
+class LogicException extends \LogicException implements ExceptionInterface
 {
 }

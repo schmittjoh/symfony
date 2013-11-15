@@ -11,6 +11,9 @@
 
 namespace Symfony\Component\Process;
 
+use Symfony\Component\Process\Exception\InvalidArgumentException;
+use Symfony\Component\Process\Exception\LogicException;
+
 /**
  * Process builder.
  *
@@ -25,6 +28,7 @@ class ProcessBuilder
     private $timeout;
     private $options;
     private $inheritEnv;
+    private $prefix;
 
     public function __construct(array $arguments = array())
     {
@@ -45,10 +49,40 @@ class ProcessBuilder
      * Adds an unescaped argument to the command string.
      *
      * @param string $argument A command argument
+     *
+     * @return ProcessBuilder
      */
     public function add($argument)
     {
         $this->arguments[] = $argument;
+
+        return $this;
+    }
+
+    /**
+     * Adds an unescaped prefix to the command string.
+     *
+     * The prefix is preserved when reseting arguments.
+     *
+     * @param string $prefix A command prefix
+     *
+     * @return ProcessBuilder
+     */
+    public function setPrefix($prefix)
+    {
+        $this->prefix = $prefix;
+
+        return $this;
+    }
+
+    /**
+     * @param array $arguments
+     *
+     * @return ProcessBuilder
+     */
+    public function setArguments(array $arguments)
+    {
+        $this->arguments = $arguments;
 
         return $this;
     }
@@ -81,8 +115,31 @@ class ProcessBuilder
         return $this;
     }
 
+    /**
+     * Sets the process timeout.
+     *
+     * To disable the timeout, set this value to null.
+     *
+     * @param float|null
+     *
+     * @return ProcessBuilder
+     *
+     * @throws InvalidArgumentException
+     */
     public function setTimeout($timeout)
     {
+        if (null === $timeout) {
+            $this->timeout = null;
+
+            return $this;
+        }
+
+        $timeout = (float) $timeout;
+
+        if ($timeout < 0) {
+            throw new InvalidArgumentException('The timeout value must be a valid positive integer or float number.');
+        }
+
         $this->timeout = $timeout;
 
         return $this;
@@ -97,13 +154,14 @@ class ProcessBuilder
 
     public function getProcess()
     {
-        if (!count($this->arguments)) {
-            throw new \LogicException('You must add() command arguments before calling getProcess().');
+        if (!$this->prefix && !count($this->arguments)) {
+            throw new LogicException('You must add() command arguments before calling getProcess().');
         }
 
         $options = $this->options;
 
-        $script = implode(' ', array_map('escapeshellarg', $this->arguments));
+        $arguments = $this->prefix ? array_merge(array($this->prefix), $this->arguments) : $this->arguments;
+        $script = implode(' ', array_map(array(__NAMESPACE__.'\\ProcessUtils', 'escapeArgument'), $arguments));
 
         if ($this->inheritEnv) {
             $env = $this->env ? $this->env + $_ENV : null;
