@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Validator\Mapping;
 
+use Symfony\Component\Security\Core\Util\ClassUtils;
 use Symfony\Component\Validator\Mapping\Loader\LoaderInterface;
 use Symfony\Component\Validator\Mapping\Cache\CacheInterface;
 
@@ -43,6 +44,7 @@ class ClassMetadataFactory implements ClassMetadataFactoryInterface
 
     public function getClassMetadata($class)
     {
+        $class = ClassUtils::getRealClass($class);
         $class = ltrim($class, '\\');
 
         if (null !== $this->cache && false !== ($this->loadedClasses[$class] = $this->cache->read($class))) {
