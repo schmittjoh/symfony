@@ -107,9 +107,9 @@ class Yaml
      *
      * @api
      */
-    static public function dump($array, $inline = 2)
+    static public function dump($array, $inline = 2, $indentationPerLevel = 4)
     {
-        $yaml = new Dumper();
+        $yaml = new Dumper($indentationPerLevel);
 
         return $yaml->dump($array, $inline);
     }

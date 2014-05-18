@@ -18,6 +18,13 @@ namespace Symfony\Component\Yaml;
  */
 class Dumper
 {
+    private $indentationPerLevel;
+
+    public function __construct($indentationPerLevel = 4)
+    {
+        $this->indentationPerLevel = $indentationPerLevel;
+    }
+
     /**
      * Dumps a PHP value to YAML.
      *
@@ -44,7 +51,7 @@ class Dumper
                     $prefix,
                     $isAHash ? Inline::dump($key).':' : '-',
                     $willBeInlined ? ' ' : "\n",
-                    $this->dump($value, $inline - 1, $willBeInlined ? 0 : $indent + 4)
+                    $this->dump($value, $inline - 1, $willBeInlined ? 0 : $indent + $this->indentationPerLevel)
                 ).($willBeInlined ? "\n" : '');
             }
         }
