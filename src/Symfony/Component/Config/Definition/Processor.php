@@ -28,8 +28,6 @@ class Processor
      */
     public function process(NodeInterface $configTree, array $configs)
     {
-        $configs = self::normalizeKeys($configs);
-
         $currentConfig = array();
         foreach ($configs as $config) {
             $config = $configTree->normalize($config);

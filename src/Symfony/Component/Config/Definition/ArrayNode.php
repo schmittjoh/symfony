@@ -30,6 +30,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     protected $addIfNotSet;
     protected $performDeepMerging;
     protected $ignoreExtraKeys;
+    protected $normalizeKeys = true;
 
     /**
      * Constructor.
@@ -139,6 +140,11 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     public function hasDefaultValue()
     {
         return $this->addIfNotSet;
+    }
+
+    public function setNormalizeKeys($bool)
+    {
+        $this->normalizeKeys = (boolean) $bool;
     }
 
     /**
@@ -261,6 +267,15 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     {
         if (false === $value) {
             return $value;
+        }
+
+        if ($this->normalizeKeys) {
+            foreach ($value as $k => $v) {
+                if (false !== strpos($k, '-') && false === strpos($k, '_') && !array_key_exists($normalizedKey = str_replace('-', '_', $k), $value)) {
+                    $value[$normalizedKey] = $v;
+                    unset($value[$k]);
+                }
+            }
         }
 
         $value = $this->remapXml($value);

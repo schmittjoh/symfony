@@ -33,6 +33,7 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
     protected $addDefaults;
     protected $addDefaultChildren;
     protected $nodeBuilder;
+    protected $normalizeKeys = true;
 
     /**
      * {@inheritDoc}
@@ -70,6 +71,13 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
     public function children()
     {
         return $this->getNodeBuilder();
+    }
+
+    public function normalizeKeys($bool)
+    {
+        $this->normalizeKeys = (boolean) $bool;
+
+        return $this;
     }
 
     /**
@@ -383,6 +391,7 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
         $node->setPerformDeepMerging($this->performDeepMerging);
         $node->setRequired($this->required);
         $node->setIgnoreExtraKeys($this->ignoreExtraKeys);
+        $node->setNormalizeKeys($this->normalizeKeys);
 
         if (null !== $this->normalization) {
             $node->setNormalizationClosures($this->normalization->before);
