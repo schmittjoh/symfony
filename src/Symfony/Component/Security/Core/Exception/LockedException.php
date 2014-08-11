@@ -20,7 +20,6 @@ class LockedException extends AccountStatusException
 {
     public function getMessageKey()
     {
-    	/** @Desc("This account is locked.") */
-        return 'security.authentication_error.account_locked';
+        return 'This account is locked.';
     }
 }

@@ -44,8 +44,7 @@ class AuthenticationException extends \RuntimeException implements \Serializable
      */
     public function getMessageKey()
     {
-        /** @Desc("An authentication error occurred.") */
-        return 'security.authentication_error.general';
+        return 'An authentication error occurred.';
     }
 
     /**

@@ -29,8 +29,7 @@ class UsernameNotFoundException extends AuthenticationException
 
     public function getMessageKey()
     {
-    	/** @Desc("The username '%username%' was not found.") */
-        return 'security.authentication_error.username_not_found';
+        return 'The username "%username%" was not found.';
     }
 
     public function getMessageParameters()

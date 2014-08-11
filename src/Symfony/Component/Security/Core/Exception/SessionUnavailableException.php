@@ -26,7 +26,6 @@ class SessionUnavailableException extends AuthenticationException
 {
     public function getMessageKey()
     {
-    	/** @Desc("The session has timed-out, or you have disabled cookies.") */
-        return 'security.authentication_error.session_unavailable';
+        return 'The session has timed-out, or you have disabled cookies.';
     }
 }

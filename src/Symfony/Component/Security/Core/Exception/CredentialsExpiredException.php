@@ -20,7 +20,6 @@ class CredentialsExpiredException extends AccountStatusException
 {
     public function getMessageKey()
     {
-    	/** @Desc("These credentials are expired.") */
-        return 'security.authentication_error.credentials_expired';
+        return 'These credentials have expired.';
     }
 }

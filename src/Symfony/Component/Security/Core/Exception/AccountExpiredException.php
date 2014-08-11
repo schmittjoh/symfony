@@ -20,7 +20,6 @@ class AccountExpiredException extends AccountStatusException
 {
     public function getMessageKey()
     {
-        /** @Desc("This account has expired.") */
-        return 'security.authentication_error.account_expired';
+        return 'This account has expired';
     }
 }

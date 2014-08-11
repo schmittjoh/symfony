@@ -25,7 +25,6 @@ class BadCredentialsException extends AuthenticationException
 
     public function getMessageKey()
     {
-    	/** @Desc("These credentials were invalid.") */
-        return 'security.authentication_error.bad_credentials';
+        return 'These credentials were invalid.';
     }
 }

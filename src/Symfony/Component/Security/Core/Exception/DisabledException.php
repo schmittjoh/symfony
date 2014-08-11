@@ -20,7 +20,6 @@ class DisabledException extends AccountStatusException
 {
     public function getMessageKey()
     {
-    	/** @Desc("This account is disabled.") */
-        return 'security.authentication_error.account_disabled';
+        return 'This account is disabled.';
     }
 }

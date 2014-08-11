@@ -20,7 +20,6 @@ class InvalidCsrfTokenException extends AuthenticationException
 {
     public function getMessageKey()
     {
-    	/** @Desc("The CSRF Token was invalid.") */
-        return 'security.authentication_error.invalid_csrf_token';
+        return 'The CSRF token was invalid.';
     }
 }
