@@ -11,7 +11,7 @@
 
 namespace Symfony\Component\Security\Core\Encoder;
 
-use Symfony\Component\Security\Core\Util\String;
+use Symfony\Component\Security\Core\Util\StringUtil;
 
 /**
  * PlaintextPasswordEncoder does not do any encoding.
@@ -48,9 +48,9 @@ class PlaintextPasswordEncoder extends BasePasswordEncoder
         $pass2 = $this->mergePasswordAndSalt($raw, $salt);
 
         if (!$this->ignorePasswordCase) {
-            return String::equals($encoded, $pass2);
+            return StringUtil::equals($encoded, $pass2);
         }
 
-        return String::equals(strtolower($encoded), strtolower($pass2));
+        return StringUtil::equals(strtolower($encoded), strtolower($pass2));
     }
 }

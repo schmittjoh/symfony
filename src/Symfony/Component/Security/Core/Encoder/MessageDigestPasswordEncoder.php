@@ -11,7 +11,7 @@
 
 namespace Symfony\Component\Security\Core\Encoder;
 
-use Symfony\Component\Security\Core\Util\String;
+use Symfony\Component\Security\Core\Util\StringUtil;
 
 /**
  * MessageDigestPasswordEncoder uses a message digest algorithm.
@@ -63,6 +63,6 @@ class MessageDigestPasswordEncoder extends BasePasswordEncoder
      */
     public function isPasswordValid($encoded, $raw, $salt)
     {
-        return String::equals($encoded, $this->encodePassword($raw, $salt));
+        return StringUtil::equals($encoded, $this->encodePassword($raw, $salt));
     }
 }
