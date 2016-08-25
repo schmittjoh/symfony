@@ -197,15 +197,23 @@ class NativeSessionStorage implements SessionStorageInterface
      */
     public function regenerate($destroy = false, $lifetime = null)
     {
+        // Cannot regenerate the session ID for non-active sessions.
+        if (\PHP_SESSION_ACTIVE !== session_status()) {
+            return false;
+        }
         if (null !== $lifetime) {
             ini_set('session.cookie_lifetime', $lifetime);
         }
-
         if ($destroy) {
             $this->metadataBag->stampNew();
         }
 
-        return session_regenerate_id($destroy);
+        $isRegenerated = session_regenerate_id($destroy);
+        // The reference to $_SESSION in session bags is lost in PHP7 and we need to re-create it.
+        // @see https://bugs.php.net/bug.php?id=70013
+        $this->loadSession();
+
+        return $isRegenerated;
     }
 
     /**
