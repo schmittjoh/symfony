@@ -49,6 +49,11 @@
             <argument type="service" id="translator" />
         </service>
 
+        <service id="twig.extension.symfony_bc" class="Symfony\Bridge\Twig\Extension\BcExtension" public="false">
+            <tag name="twig.extension" />
+            <argument type="service" id="http_kernel" />
+        </service>
+
         <service id="twig.extension.assets" class="%twig.extension.assets.class%" public="false">
             <tag name="twig.extension" />
             <argument type="service" id="service_container" />

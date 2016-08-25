@@ -324,6 +324,10 @@ class ProfilerController extends ContainerAware
             if ('.html.twig' === substr($template, -10)) {
                 $template = substr($template, 0, -10);
             }
+            if ($template[0] === '@') {
+                list($bundlePrefix, $category, $path) = explode('/', substr($template, 1), 3);
+                $template = $bundlePrefix.'Bundle:'.$category.':'.$path;
+            }
 
             if (!$this->container->get('templating')->exists($template.'.html.twig')) {
                 throw new \UnexpectedValueException(sprintf('The profiler template "%s.html.twig" for data collector "%s" does not exist.', $template, $name));

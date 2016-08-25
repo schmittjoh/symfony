@@ -11,6 +11,7 @@
 
 namespace Symfony\Bridge\Twig\Extension;
 
+use Symfony\Component\HttpKernel\Controller\ControllerReference;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
