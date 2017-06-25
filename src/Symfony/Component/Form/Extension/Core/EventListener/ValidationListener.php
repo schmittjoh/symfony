@@ -49,17 +49,24 @@ class ValidationListener implements EventSubscriberInterface
             $max = trim(ini_get('post_max_size'));
 
             if ('' !== $max) {
-                switch (strtolower(substr($max, -1))) {
+                $modifier = strtolower(substr($max, -1));
+                $maxBytes = is_numeric($modifier) ? (integer)$max : (integer)substr($max, 0, -1);
+
+                switch ($modifier) {
                     // The 'G' modifier is available since PHP 5.1.0
                     case 'g':
-                        $max *= 1024;
+                        $maxBytes *= 1024;
+                        // Fall-through
+
                     case 'm':
-                        $max *= 1024;
+                        $maxBytes *= 1024;
+                        // Fall-through
+
                     case 'k':
-                        $max *= 1024;
+                        $maxBytes *= 1024;
                 }
 
-                if ($length > $max) {
+                if ($length > $maxBytes) {
                     $form->addError(new FormError('The uploaded file was too large. Please try to upload a smaller file'));
                 }
             }
