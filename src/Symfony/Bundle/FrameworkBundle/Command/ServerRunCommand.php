@@ -25,7 +25,7 @@ use Symfony\Component\Process\ProcessBuilder;
 class ServerRunCommand extends ContainerAwareCommand
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function isEnabled()
     {
@@ -37,7 +37,7 @@ class ServerRunCommand extends ContainerAwareCommand
     }
 
     /**
-     * @see Command
+     * {@inheritdoc}
      */
     protected function configure()
     {
@@ -67,6 +67,9 @@ router script using <info>--router</info> option:
 
   <info>%command.full_name% --router=app/config/router.php</info>
 
+Specifing a router script is required when the used environment is not "dev" or
+"prod".
+
 See also: http://www.php.net/manual/en/features.commandline.webserver.php
 EOF
             )
@@ -74,25 +77,58 @@ EOF
     }
 
     /**
-     * @see Command
+     * {@inheritdoc}
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $documentRoot = $input->getOption('docroot');
+
+        if (!is_dir($documentRoot)) {
+            $output->writeln(sprintf('<error>The given document root directory "%s" does not exist</error>', $documentRoot));
+
+            return 1;
+        }
+
+        $env = $this->getContainer()->getParameter('kernel.environment');
+
+        if ('prod' === $env) {
+            $output->writeln('<error>Running PHP built-in server in production environment is NOT recommended!</error>');
+        }
+
         $router = $input->getOption('router') ?: $this
             ->getContainer()
             ->get('kernel')
-            ->locateResource('@FrameworkBundle/Resources/config/router.php')
+            ->locateResource(sprintf('@FrameworkBundle/Resources/config/router_%s.php', $env))
         ;
 
-        $output->writeln(sprintf("Server running on <info>%s</info>\n", $input->getArgument('address')));
+        if (!file_exists($router)) {
+            $output->writeln(sprintf('<error>The given router script "%s" does not exist</error>', $router));
+
+            return 1;
+        }
+
+        $router = realpath($router);
+
+        $output->writeln(sprintf("Server running on <info>http://%s</info>\n", $input->getArgument('address')));
 
         $builder = new ProcessBuilder(array(PHP_BINARY, '-S', $input->getArgument('address'), $router));
-        $builder->setWorkingDirectory($input->getOption('docroot'));
+        $builder->setWorkingDirectory($documentRoot);
         $builder->setTimeout(null);
-        $builder->getProcess()->run(function ($type, $buffer) use ($output) {
-            if (OutputInterface::VERBOSITY_VERBOSE === $output->getVerbosity()) {
+        $process = $builder->getProcess();
+        $process->run(function ($type, $buffer) use ($output) {
+            if (OutputInterface::VERBOSITY_VERBOSE <= $output->getVerbosity()) {
                 $output->write($buffer);
             }
         });
+
+        if (!$process->isSuccessful()) {
+            $output->writeln('<error>Built-in server terminated unexpectedly</error>');
+
+            if (OutputInterface::VERBOSITY_VERBOSE > $output->getVerbosity()) {
+                $output->writeln('<error>Run the command again with -v option for more details</error>');
+            }
+        }
+
+        return $process->getExitCode();
     }
 }
