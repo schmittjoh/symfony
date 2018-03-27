@@ -233,9 +233,9 @@ class DateType extends AbstractType
     private function formatMonths(\IntlDateFormatter $formatter, array $months)
     {
         $pattern = $formatter->getPattern();
-        $timezone = $formatter->getTimezoneId();
+        $timezone = $formatter->getTimeZone();
 
-        $formatter->setTimezoneId(\DateTimeZone::UTC);
+        $formatter->setTimeZone(\DateTimeZone::UTC);
 
         if (preg_match('/M+/', $pattern, $matches)) {
             $formatter->setPattern($matches[0]);
@@ -249,7 +249,7 @@ class DateType extends AbstractType
             $formatter->setPattern($pattern);
         }
 
-        $formatter->setTimezoneId($timezone);
+        $formatter->setTimeZone($timezone);
 
         return $months;
     }
